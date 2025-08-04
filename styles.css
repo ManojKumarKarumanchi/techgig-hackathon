@@ -104,17 +104,17 @@ body::before {
 /* Orientation Indicator */
 .orientation-indicator {
     position: fixed;
-    top: 20px;
-    left: 20px;
+    top: 10px;
+    left: 10px;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 25px;
-    padding: 15px 25px;
+    padding: 10px 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 0.95rem;
+    gap: 10px;
+    font-size: 0.9rem;
     font-weight: 500;
     color: white;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -141,7 +141,7 @@ body::before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 60px 20px 20px 20px;
     box-sizing: border-box;
     margin: 0;
 }
@@ -156,6 +156,13 @@ body::before {
     .feature-container.active {
         width: 50%;
         height: 100vh;
+        padding: 50px 15px 15px 15px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
     }
     
     #stopwatch.active {
@@ -164,6 +171,19 @@ body::before {
     
     #weather.active {
         left: 50%;
+    }
+    
+    /* Ensure proper container sizing */
+    .feature-container {
+        box-sizing: border-box;
+    }
+    
+    /* Adjust orientation indicator for landscape */
+    .orientation-indicator {
+        top: 5px;
+        left: 5px;
+        padding: 8px 15px;
+        font-size: 0.8rem;
     }
 }
 
@@ -198,16 +218,47 @@ body::before {
 /* Adjust feature header for landscape mode */
 @media (orientation: landscape) {
     .feature-header h1 {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
     }
     
     .feature-header i {
-        font-size: 2rem;
-        margin-bottom: 10px;
+        font-size: 1.8rem;
+        margin-bottom: 8px;
     }
     
     .feature-header {
-        margin-bottom: 20px;
+        margin-bottom: 15px;
+    }
+    
+    /* Adjust stopwatch display for landscape */
+    #stopwatch-time {
+        font-size: 2rem;
+        margin: 8px 0;
+    }
+    
+    #stopwatch-milliseconds {
+        font-size: 1.1rem;
+    }
+    
+    /* Adjust stopwatch controls */
+    .stopwatch-controls {
+        gap: 8px;
+        margin: 12px 0;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+    
+    /* Adjust lap times section */
+    .lap-times h3 {
+        font-size: 1rem;
+        margin: 12px 0 8px 0;
+    }
+    
+    .lap-list {
+        max-height: 100px;
     }
 }
 
@@ -230,8 +281,61 @@ body::before {
 /* Adjust content card for landscape mode */
 @media (orientation: landscape) {
     .content-card {
-        max-width: 90%;
-        padding: 25px 20px;
+        max-width: 100%;
+        width: 100%;
+        padding: 20px 15px;
+        margin: 0;
+        box-sizing: border-box;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+    }
+    
+    /* Adjust weather content for better fit */
+    .weather-content {
+        padding: 0;
+        margin: 0;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+    
+    /* Adjust weather data layout */
+    .weather-data {
+        padding: 0;
+    }
+    
+    /* Make weather details more compact */
+    .weather-details {
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    .detail-item {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+    
+    /* Adjust temperature display */
+    .temperature {
+        font-size: 2.2rem;
+        margin: 8px 0;
+    }
+    
+    /* Adjust weather description */
+    .weather-description {
+        font-size: 0.9rem;
+        margin: 6px 0;
+    }
+    
+    /* Adjust location */
+    .location {
+        margin-bottom: 15px;
+        font-size: 1rem;
+    }
+    
+    /* Adjust weather icon */
+    .weather-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
     }
 }
 

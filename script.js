@@ -87,7 +87,7 @@ function isMobileDevice() {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS|FxiOS/i;
     
-    // Check if it's a mobile device
+    // Check if it's a mobile device via user agent
     if (mobileRegex.test(userAgent)) {
         return true;
     }
@@ -104,7 +104,25 @@ function isMobileDevice() {
         }
     };
     
-    return isMobile.any();
+    if (isMobile.any()) {
+        return true;
+    }
+    
+    // Check for mobile viewport dimensions (for developer tools testing)
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    
+    // If viewport is mobile-sized (width <= 768px and height <= 1024px)
+    if (viewportWidth <= 768 && viewportHeight <= 1024) {
+        return true;
+    }
+    
+    // Check for touch capabilities (many mobile devices have touch)
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        return true;
+    }
+    
+    return false;
 }
 
 function showDesktopFallback() {
