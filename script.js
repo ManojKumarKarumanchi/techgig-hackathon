@@ -14,6 +14,7 @@ let lapTimes = [];
 let timerInterval = null;
 let timerEndTime = null;
 let timerRunning = false;
+let landscapeFeatureToggle = 'stopwatch'; // Track which landscape feature to show
 
 // DOM elements
 const loadingScreen = document.getElementById('loading');
@@ -217,7 +218,7 @@ function updateOrientation(orientation) {
     const orientationLabels = {
         'portrait-upright': 'Portrait (Alarm)',
         'portrait-upside-down': 'Upside Down (Timer)',
-        'landscape': 'Landscape (Stopwatch + Weather)'
+        'landscape': `Landscape (${landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather'})`
     };
     
     orientationText.textContent = orientationLabels[orientation] || 'Detecting...';
@@ -236,11 +237,16 @@ function updateOrientation(orientation) {
             timerContainer.classList.add('active');
             break;
         case 'landscape':
-            stopwatchContainer.classList.add('active');
-            weatherContainer.classList.add('active');
-            loadWeatherData();
+            // Toggle between Stopwatch and Weather in landscape mode
+            if (landscapeFeatureToggle === 'stopwatch') {
+                stopwatchContainer.classList.add('active');
+                weatherContainer.classList.remove('active');
+            } else {
+                weatherContainer.classList.add('active');
+                stopwatchContainer.classList.remove('active');
+                loadWeatherData();
+            }
             break;
-
     }
 }
 
@@ -678,6 +684,29 @@ document.addEventListener('touchstart', function(e) {
 document.addEventListener('touchend', function(e) {
     if (e.target.classList.contains('btn') || e.target.classList.contains('preset-btn')) {
         e.target.style.transform = '';
+    }
+});
+
+// Landscape feature toggle - tap to switch between Stopwatch and Weather
+let lastTapTime = 0;
+document.addEventListener('touchend', function(e) {
+    // Only trigger if we're in landscape mode and not clicking on buttons
+    if (currentOrientation === 'landscape' && 
+        !e.target.classList.contains('btn') && 
+        !e.target.classList.contains('preset-btn') &&
+        !e.target.closest('.btn') &&
+        !e.target.closest('.preset-btn')) {
+        
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTapTime;
+        
+        // Double tap to toggle landscape features
+        if (tapLength < 500 && tapLength > 0) {
+            landscapeFeatureToggle = landscapeFeatureToggle === 'stopwatch' ? 'weather' : 'stopwatch';
+            updateOrientation('landscape'); // Refresh the display
+            e.preventDefault();
+        }
+        lastTapTime = currentTime;
     }
 });
 
