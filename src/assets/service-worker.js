@@ -4,12 +4,12 @@ const urlsToCache = [
   '/',
   '/index.html',
   './index.html',
-  '/styles.css',
-  './styles.css',
-  '/script.js',
-  './script.js',
-  '/deploy-helper.js',
-  './deploy-helper.js',
+  '/src/css/main.css',
+  './src/css/main.css',
+  '/src/js/app.js',
+  './src/js/app.js',
+  '/src/assets/service-worker.js',
+  './src/assets/service-worker.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];

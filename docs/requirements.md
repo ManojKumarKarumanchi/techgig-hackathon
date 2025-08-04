@@ -18,5 +18,3 @@ User Experience – Is the interface intuitive, responsive, and visually appeali
 Prompting - How efficiently and effectively AI is used in the development process. How prompting is done to development? Which prompting techniques are used?
 Technical Implementation – Is the code clean, efficient, and well-documented?
 Wow! Factor – Does the project go beyond expectations?
-
-are these fully met how can i live test, host in vercel so that it will be easy i think or github pages which is easy
