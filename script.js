@@ -706,7 +706,9 @@ document.addEventListener('visibilitychange', function() {
 // Service Worker registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js')
+        // Use relative path for local development, absolute for production
+        const swPath = window.location.hostname === 'localhost' ? './sw.js' : '/sw.js';
+        navigator.serviceWorker.register(swPath)
             .then(function(registration) {
                 console.log('SW registered: ', registration);
             })

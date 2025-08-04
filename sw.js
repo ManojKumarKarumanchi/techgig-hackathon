@@ -3,8 +3,13 @@ const CACHE_NAME = 'smart-orientation-app-v1';
 const urlsToCache = [
   '/',
   '/index.html',
+  './index.html',
   '/styles.css',
+  './styles.css',
   '/script.js',
+  './script.js',
+  '/deploy-helper.js',
+  './deploy-helper.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];
@@ -22,11 +27,32 @@ self.addEventListener('install', event => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  
+  // Handle favicon requests
+  if (url.pathname === '/favicon.ico') {
+    const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📱</text></svg>`;
+    return event.respondWith(
+      new Response(svgIcon, {
+        headers: { 'Content-Type': 'image/svg+xml' }
+      })
+    );
+  }
+  
+  // Ignore Chrome DevTools requests
+  if (url.pathname.includes('.well-known/appspecific/')) {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then(response => {
         // Return cached version or fetch from network
         return response || fetch(event.request);
+      })
+      .catch(() => {
+        // Return empty response for failed requests
+        return new Response('', { status: 404 });
       })
   );
 });
