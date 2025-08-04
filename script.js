@@ -39,6 +39,9 @@ function initializeApp() {
         return;
     }
 
+    // Hide desktop fallback since mobile detection succeeded
+    desktopFallback.style.display = 'none';
+
     // Initialize all features first
     initializeAlarmClock();
     initializeStopwatch();
@@ -68,17 +71,23 @@ function setupOrientationDetection() {
         DeviceOrientationEvent.requestPermission()
             .then(permissionState => {
                 if (permissionState === 'granted') {
-                    setupOrientationDetection();
+                    setupOrientationListeners();
                 } else {
                     showOrientationError();
                 }
             })
             .catch(() => {
-                setupOrientationDetection();
+                setupOrientationListeners();
             });
     } else {
-        setupOrientationDetection();
+        setupOrientationListeners();
     }
+}
+
+function setupOrientationListeners() {
+    window.addEventListener('deviceorientation', handleDeviceOrientation);
+    window.addEventListener('orientationchange', handleOrientationChange);
+    detectInitialOrientation();
 }
 
 // Device detection - Improved for better mobile detection
