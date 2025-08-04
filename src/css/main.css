@@ -7,39 +7,204 @@
     box-sizing: border-box;
 }
 
+/* Universal theme transition for all elements using CSS variables */
+* {
+    transition: 
+        color var(--transition-speed) var(--transition-timing),
+        background-color var(--transition-speed) var(--transition-timing),
+        background var(--transition-speed) var(--transition-timing),
+        border-color var(--transition-speed) var(--transition-timing),
+        box-shadow var(--transition-speed) var(--transition-timing),
+        opacity var(--transition-speed) var(--transition-timing),
+        transform var(--transition-speed) var(--transition-timing);
+}
+
+/* CSS Variables for Theme Support */
+:root {
+    /* Light Theme Colors - Modern & Appealing */
+    --primary-color: #7c3aed;
+    --secondary-color: #06b6d4;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --info-color: #3b82f6;
+    
+    --bg-primary: #fafafa;
+    --bg-secondary: #f4f4f5;
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --bg-glass: rgba(255, 255, 255, 0.15);
+    
+    --text-primary: #18181b;
+    --text-secondary: #52525b;
+    --text-muted: #71717a;
+    
+    --border-color: rgba(161, 161, 170, 0.3);
+    --shadow-color: rgba(0, 0, 0, 0.08);
+    
+    --success-bg: rgba(16, 185, 129, 0.1);
+    --warning-bg: rgba(245, 158, 11, 0.1);
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    --info-bg: rgba(59, 130, 246, 0.1);
+    
+    /* Transition properties for smooth theme switching */
+    --transition-speed: 0.4s;
+    --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Safe area insets for mobile devices */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* Dark Theme Colors - Modern & Appealing */
+.dark, .dark-theme {
+    --primary-color: #a855f7;
+    --secondary-color: #22d3ee;
+    --success-color: #34d399;
+    --warning-color: #fbbf24;
+    --danger-color: #f87171;
+    --info-color: #60a5fa;
+    
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #18181b;
+    --bg-card: rgba(24, 24, 27, 0.9);
+    --bg-glass: rgba(24, 24, 27, 0.2);
+    
+    --text-primary: #fafafa;
+    --text-secondary: #d4d4d8;
+    --text-muted: #a1a1aa;
+    
+    --border-color: rgba(161, 161, 170, 0.4);
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    
+    --success-bg: rgba(52, 211, 153, 0.1);
+    --warning-bg: rgba(251, 191, 36, 0.1);
+    --danger-bg: rgba(248, 113, 113, 0.1);
+    --info-bg: rgba(96, 165, 250, 0.1);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: absolute;
+    top: calc(10px + var(--safe-area-top));
+    right: calc(10px + var(--safe-area-right));
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    backdrop-filter: blur(10px);
+    transition: all var(--transition-speed) var(--transition-timing);
+    z-index: 1000;
+    border: 2px solid transparent;
+}
+
+.theme-toggle:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1) rotate(180deg);
+    box-shadow: 0 8px 25px var(--shadow-color);
+    border-color: var(--primary-color);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95) rotate(180deg);
+    transition: all 0.1s ease;
+}
+
+/* Time Format Toggle Button */
+.time-format-toggle {
+    position: absolute;
+    top: calc(10px + var(--safe-area-top));
+    right: calc(60px + var(--safe-area-right));
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    transition: all var(--transition-speed) var(--transition-timing);
+    z-index: 1000;
+    border: 2px solid transparent;
+}
+
+.time-format-toggle:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    border-color: var(--primary-color);
+}
+
+.time-format-toggle:active {
+    transform: scale(0.95);
+    transition: all 0.1s ease;
+}
+
+/* Fullscreen Toggle Button */
+.fullscreen-toggle {
+    position: absolute;
+    top: calc(10px + var(--safe-area-top));
+    right: calc(110px + var(--safe-area-right));
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    backdrop-filter: blur(10px);
+    transition: all var(--transition-speed) var(--transition-timing);
+    z-index: 1000;
+    border: 2px solid transparent;
+}
+
+.fullscreen-toggle:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px var(--shadow-color);
+    border-color: var(--primary-color);
+}
+
+.fullscreen-toggle:active {
+    transform: scale(0.95);
+    transition: all 0.1s ease;
+}
+
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
     min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
     overflow-x: hidden;
-    color: #333;
+    color: var(--text-primary);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     padding: 0;
     margin: 0;
     position: relative;
-}
-
-/* Animated Background */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
-    animation: backgroundShift 20s ease-in-out infinite;
-    z-index: -1;
-}
-
-@keyframes backgroundShift {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.1) rotate(1deg); }
+    transition: all var(--transition-speed) var(--transition-timing);
 }
 
 /* Loading Screen */
@@ -49,6 +214,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
     display: flex;
     align-items: center;
@@ -56,6 +222,8 @@ body::before {
     z-index: 9999;
     transition: opacity 0.5s ease;
     padding: 20px;
+    padding-top: calc(20px + var(--safe-area-top));
+    padding-bottom: calc(20px + var(--safe-area-bottom));
     backdrop-filter: blur(20px);
 }
 
@@ -74,12 +242,18 @@ body::before {
 .loading-spinner {
     width: 60px;
     height: 60px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top: 3px solid white;
+    border: 3px solid rgba(124, 58, 237, 0.3);
+    border-top: 3px solid var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 30px;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+    transition: all 0.3s ease;
+}
+
+.loading-spinner:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
 }
 
 @keyframes spin {
@@ -104,29 +278,42 @@ body::before {
 /* Orientation Indicator */
 .orientation-indicator {
     position: fixed;
-    top: 10px;
-    left: 10px;
-    background: rgba(255, 255, 255, 0.15);
+    top: calc(20px + var(--safe-area-top));
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-glass);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--border-color);
     border-radius: 25px;
-    padding: 10px 20px;
+    padding: 0.75rem 1.5rem;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0.5rem;
     font-size: 0.9rem;
     font-weight: 500;
-    color: white;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
     z-index: 1000;
-    transition: all 0.3s ease;
-    margin: 0;
+    box-shadow: 0 4px 20px var(--shadow-color);
+    min-width: 300px;
+    justify-content: center;
+    position: relative;
 }
 
 .orientation-indicator i {
-    font-size: 1.2rem;
-    color: #fff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    animation: iconGlow 2s ease-in-out infinite alternate;
+    transition: all 0.3s ease;
+}
+
+.orientation-indicator:hover i {
+    transform: scale(1.2) rotate(10deg);
+    filter: drop-shadow(0 0 10px var(--primary-color));
+}
+
+.orientation-indicator span {
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 /* Feature Containers */
@@ -136,19 +323,22 @@ body::before {
     left: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px 20px 20px;
+    padding: calc(60px + var(--safe-area-top)) 20px calc(20px + var(--safe-area-bottom)) 20px;
     box-sizing: border-box;
     margin: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .feature-container.active {
     display: flex;
-    animation: fadeInUp 0.5s ease;
+    animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Landscape mode: Show one feature at a time with toggle capability */
@@ -156,7 +346,8 @@ body::before {
     .feature-container.active {
         width: 100%;
         height: 100vh;
-        padding: 50px 15px 15px 15px;
+        height: 100dvh; /* Dynamic viewport height */
+        padding: calc(50px + var(--safe-area-top)) 15px calc(15px + var(--safe-area-bottom)) 15px;
         box-sizing: border-box;
         overflow-y: auto;
         display: flex;
@@ -172,17 +363,18 @@ body::before {
     
     /* Adjust orientation indicator for landscape */
     .orientation-indicator {
-        top: 5px;
-        left: 5px;
+        top: calc(5px + var(--safe-area-top));
+        left: calc(5px + var(--safe-area-left));
         padding: 8px 15px;
         font-size: 0.8rem;
+        transform: none;
     }
     
     /* Add subtle hint for landscape toggle */
     .feature-container.active::after {
         content: 'Double tap to switch features';
         position: absolute;
-        bottom: 20px;
+        bottom: calc(20px + var(--safe-area-bottom));
         left: 50%;
         transform: translateX(-50%);
         color: rgba(255, 255, 255, 0.6);
@@ -202,6 +394,7 @@ body::before {
     text-align: center;
     margin-bottom: 30px;
     color: white;
+    position: relative;
 }
 
 .feature-header i {
@@ -224,6 +417,45 @@ body::before {
     margin: 0;
     letter-spacing: -1px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.refresh-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-speed) var(--transition-timing);
+    backdrop-filter: blur(10px);
+}
+
+.refresh-btn:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.refresh-btn i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.refresh-btn i.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Adjust feature header for landscape mode */
@@ -274,19 +506,17 @@ body::before {
 }
 
 .content-card {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-glass);
     backdrop-filter: blur(25px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
-    padding: 40px 30px;
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 2rem;
+    margin: 1rem;
     box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    text-align: center;
-    max-width: 500px;
-    width: 100%;
-    margin: 0;
-    transition: all 0.3s ease;
+        0 8px 32px var(--shadow-color),
+        0 2px 8px rgba(0, 0, 0, 0.05);
+    animation: float 8s ease-in-out infinite;
+    transition: all var(--transition-speed) var(--transition-timing);
 }
 
 /* Adjust content card for landscape mode */
@@ -351,10 +581,12 @@ body::before {
 }
 
 .content-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px) scale(1.02);
     box-shadow: 
-        0 15px 45px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        0 20px 60px var(--shadow-color),
+        0 8px 25px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: var(--primary-color);
 }
 
 /* Current Time Display */
@@ -365,17 +597,19 @@ body::before {
 .current-time #current-time {
     font-size: 3.5rem;
     font-weight: 700;
-    color: white;
+    color: var(--primary-color);
     margin-bottom: 10px;
     font-family: 'Courier New', monospace;
     letter-spacing: 2px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 10px var(--shadow-color);
+    transition: color var(--transition-speed) var(--transition-timing), text-shadow var(--transition-speed) var(--transition-timing);
 }
 
 .current-time #current-date {
     font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
     font-weight: 500;
+    transition: color var(--transition-speed) var(--transition-timing);
 }
 
 /* Time Input Groups */
@@ -389,35 +623,38 @@ body::before {
     display: block;
     font-size: 0.9rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
     margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    transition: color var(--transition-speed) var(--transition-timing);
 }
 
 .time-input-group input {
     width: 80px;
     padding: 12px 15px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid var(--border-color);
     border-radius: 12px;
     font-size: 1.1rem;
     text-align: center;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-glass);
     backdrop-filter: blur(10px);
-    color: white;
-    transition: all 0.3s ease;
+    color: var(--text-primary);
+    transition: all var(--transition-speed) var(--transition-timing);
     margin: 0;
 }
 
 .time-input-group input:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    background: var(--bg-card);
+    transform: scale(1.05);
 }
 
 .time-input-group input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
+    transition: color var(--transition-speed) var(--transition-timing);
 }
 
 /* Buttons */
@@ -428,7 +665,7 @@ body::before {
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-speed) var(--transition-timing);
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -437,7 +674,7 @@ body::before {
     min-width: 120px;
     justify-content: center;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
 }
@@ -458,43 +695,44 @@ body::before {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
 }
 
 .btn-success {
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.8) 0%, rgba(32, 201, 151, 0.8) 100%);
+    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
 }
 
 .btn-warning {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.8) 0%, rgba(253, 126, 20, 0.8) 100%);
+    background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, rgba(220, 53, 69, 0.8) 0%, rgba(232, 62, 140, 0.8) 100%);
+    background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, rgba(108, 117, 125, 0.8) 0%, rgba(73, 80, 87, 0.8) 100%);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, #0891b2 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    box-shadow: 0 4px 20px rgba(6, 182, 212, 0.4);
 }
 
 .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .btn:active {
-    transform: translateY(0);
+    transform: translateY(-1px) scale(0.98);
+    transition: all 0.1s ease;
 }
 
 /* Alarm Controls */
@@ -536,16 +774,16 @@ body::before {
 #stopwatch-time {
     font-size: 3.5rem;
     font-weight: 700;
-    color: white;
+    color: var(--primary-color);
     font-family: 'Courier New', monospace;
     letter-spacing: 2px;
     margin-bottom: 5px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 #stopwatch-milliseconds {
     font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
     font-family: 'Courier New', monospace;
     font-weight: 500;
 }
@@ -606,10 +844,10 @@ body::before {
 #timer-time {
     font-size: 4rem;
     font-weight: 700;
-    color: white;
+    color: var(--primary-color);
     font-family: 'Courier New', monospace;
     letter-spacing: 3px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .timer-inputs {
@@ -711,10 +949,16 @@ body::before {
 
 .weather-icon {
     font-size: 4rem;
-    color: #ffd700;
+    color: var(--warning-color);
     margin-bottom: 15px;
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
     animation: weatherIconFloat 3s ease-in-out infinite;
+    transition: all 0.3s ease;
+}
+
+.weather-icon:hover {
+    transform: scale(1.1) rotate(5deg);
+    filter: drop-shadow(0 0 15px var(--warning-color));
 }
 
 @keyframes weatherIconFloat {
@@ -725,14 +969,14 @@ body::before {
 .temperature {
     font-size: 3.5rem;
     font-weight: 700;
-    color: white;
+    color: var(--primary-color);
     margin-bottom: 10px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .weather-description {
     font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
     font-weight: 500;
     text-transform: capitalize;
 }
@@ -940,21 +1184,23 @@ body::before {
 
 /* Scrollbar Styling */
 .lap-list::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 .lap-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    background: var(--bg-glass);
+    border-radius: 4px;
 }
 
 .lap-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
+    background: var(--primary-color);
+    border-radius: 4px;
+    transition: all 0.3s ease;
 }
 
 .lap-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--secondary-color);
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
 }
 
 /* Animation Classes */
@@ -1005,8 +1251,30 @@ body::before {
 
 /* Floating Animation for Cards */
 @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-12px) rotate(0.5deg); }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .content-card {
@@ -1019,4 +1287,703 @@ body::before {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+/* Enhanced Alarm Clock Styles */
+.current-time-display {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.current-time-display .time {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.current-time-display .date {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.alarm-setup {
+    margin-bottom: 2rem;
+}
+
+.time-inputs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.time-input {
+    width: 80px;
+    height: 50px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.time-separator {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.alarm-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.alarm-status {
+    text-align: center;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: var(--success-bg);
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.alarm-section {
+    margin-top: 2rem;
+}
+
+.alarm-section h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.alarm-display {
+    padding: 1rem;
+    background: var(--bg-glass);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.alarm-display .alarm-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.alarm-display .alarm-time {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.alarm-display .alarm-date {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.alarm-display .alarm-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.alarm-display .alarm-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.alarm-display .alarm-toggle, .alarm-display .alarm-delete {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.alarm-display .alarm-toggle {
+    background: var(--primary-color);
+    color: white;
+}
+
+.alarm-display .alarm-delete {
+    background: var(--danger-color);
+    color: white;
+}
+
+.alarm-display .alarm-toggle:hover, .alarm-display .alarm-delete:hover {
+    transform: scale(1.1);
+}
+
+.no-alarm {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 1rem;
+}
+
+/* Quick Alarm Buttons */
+.quick-alarms {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.quick-alarm-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-speed) var(--transition-timing);
+}
+
+.quick-alarm-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+/* Alarm Management */
+.alarm-management {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.alarm-manage-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-speed) var(--transition-timing);
+}
+
+.alarm-manage-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.alarm-manage-btn.danger:hover {
+    border-color: var(--error-color);
+    background: var(--error-color);
+}
+
+/* Multiple Alarms Display */
+.alarms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.alarms-section h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.alarm-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-speed) var(--transition-timing);
+}
+
+.alarm-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.alarm-item.enabled {
+    border-left: 4px solid var(--success-color);
+}
+
+.alarm-item.disabled {
+    border-left: 4px solid var(--text-muted);
+    opacity: 0.7;
+}
+
+.alarm-item .alarm-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.alarm-item .alarm-time {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.alarm-item .alarm-date {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.alarm-item .alarm-label {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.alarm-countdown {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.alarm-item .alarm-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0;
+}
+
+.alarm-item .alarm-toggle,
+.alarm-item .alarm-delete {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-speed) var(--transition-timing);
+    background: var(--bg-glass);
+    color: var(--text-primary);
+}
+
+.alarm-item .alarm-toggle:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.alarm-item .alarm-delete:hover {
+    background: var(--error-color);
+    color: white;
+}
+
+/* Enhanced Stopwatch Styles */
+.stopwatch-display {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.time-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.main-time {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.milliseconds {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.stopwatch-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.laps-section {
+    margin-top: 2rem;
+}
+
+.laps-section h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.lap-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.lap-item {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: var(--bg-glass);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.lap-item.fastest {
+    border-left: 4px solid var(--success-color);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.lap-item.slowest {
+    border-left: 4px solid var(--warning-color);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.lap-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.lap-number {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.lap-time {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.lap-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.total-time {
+    font-weight: 500;
+}
+
+.lap-timestamp {
+    font-size: 0.8rem;
+}
+
+.no-laps {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 2rem;
+}
+
+/* Enhanced Weather Styles */
+.weather-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-glass);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.detail-item i {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    width: 20px;
+}
+
+.sun-info {
+    display: flex;
+    justify-content: space-around;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: var(--bg-glass);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.sun-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+}
+
+.sun-item i {
+    color: var(--warning-color);
+    font-size: 1.2rem;
+}
+
+.forecast-container {
+    margin: 1.5rem 0;
+}
+
+.forecast-container h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.forecast-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.forecast-day {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-glass);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.forecast-date {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.forecast-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.forecast-temp {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.forecast-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    text-transform: capitalize;
+}
+
+.forecast-humidity {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.additional-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-glass);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.info-item i {
+    color: var(--primary-color);
+    width: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .weather-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .forecast-list {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+    
+    .additional-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .sun-info {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .main-time {
+        font-size: 2.5rem;
+    }
+    
+    .milliseconds {
+        font-size: 1.5rem;
+    }
+    
+    .time-input {
+        width: 60px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    
+    .alarm-time {
+        font-size: 1.2rem;
+    }
+}
+
+/* Mobile-specific viewport handling */
+@media screen and (max-width: 768px) {
+    /* Ensure proper viewport handling on mobile */
+    html, body {
+        height: 100%;
+        height: 100dvh;
+        overflow-x: hidden;
+    }
+    
+    /* Prevent content from being cut off */
+    .feature-container {
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding-top: max(60px, calc(60px + var(--safe-area-top)));
+        padding-bottom: max(20px, calc(20px + var(--safe-area-bottom)));
+        padding-left: max(20px, calc(20px + var(--safe-area-left)));
+        padding-right: max(20px, calc(20px + var(--safe-area-right)));
+    }
+    
+    /* Ensure content cards don't overflow */
+    .content-card {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    
+    /* Adjust button positioning for mobile */
+    .theme-toggle,
+    .time-format-toggle,
+    .fullscreen-toggle {
+        position: fixed;
+        z-index: 1000;
+    }
+    
+    /* Ensure proper spacing for mobile */
+    .feature-header {
+        margin-bottom: 20px;
+        padding-top: 10px;
+    }
+    
+    .feature-header h1 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .feature-header i {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+}
+
+/* Extra small devices */
+@media screen and (max-width: 480px) {
+    .feature-container {
+        padding-top: max(50px, calc(50px + var(--safe-area-top)));
+        padding-bottom: max(15px, calc(15px + var(--safe-area-bottom)));
+        padding-left: max(15px, calc(15px + var(--safe-area-left)));
+        padding-right: max(15px, calc(15px + var(--safe-area-right)));
+    }
+    
+    .content-card {
+        padding: 15px;
+    }
+    
+    .feature-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .feature-header i {
+        font-size: 2.2rem;
+    }
+    
+    /* Adjust button spacing for very small screens */
+    .theme-toggle {
+        right: calc(10px + var(--safe-area-right));
+    }
+    
+    .time-format-toggle {
+        right: calc(55px + var(--safe-area-right));
+    }
+    
+    .fullscreen-toggle {
+        right: calc(100px + var(--safe-area-right));
+    }
+}
+
+/* Handle notched devices */
+@supports (padding: max(0px)) {
+    .feature-container {
+        padding-top: max(60px, calc(60px + var(--safe-area-top)));
+        padding-bottom: max(20px, calc(20px + var(--safe-area-bottom)));
+        padding-left: max(20px, calc(20px + var(--safe-area-left)));
+        padding-right: max(20px, calc(20px + var(--safe-area-right)));
+    }
+    
+    .orientation-indicator {
+        top: max(20px, calc(20px + var(--safe-area-top)));
+    }
+    
+    .theme-toggle,
+    .time-format-toggle,
+    .fullscreen-toggle {
+        top: max(10px, calc(10px + var(--safe-area-top)));
+    }
 }

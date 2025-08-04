@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Smart Orientation App</title>
     
     <!-- Favicon to prevent 404 errors -->
@@ -11,12 +11,27 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
     
     <!-- Cache control -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Cache-Control" content="public, max-age=3600">
+    <meta http-equiv="Pragma" content="cache">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Smart Orientation App">
+    <meta name="description" content="A mobile web application that switches features based on device orientation - Alarm Clock, Stopwatch, Timer, and Weather">
+    <meta name="keywords" content="mobile app, orientation, alarm clock, stopwatch, timer, weather, PWA">
+    <meta name="author" content="AI-First Developer">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Smart Orientation App">
+    <meta property="og:description" content="A mobile web application that switches features based on device orientation">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://manojkumarkarumanchi.github.io/techgig-hackathon/">
+    <meta property="og:image" content="https://manojkumarkarumanchi.github.io/techgig-hackathon/assets/og-image.png">
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="src/css/main.css">
+            <link rel="stylesheet" href="src/css/main.css?v=1.8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -44,34 +59,68 @@
             <i class="fas fa-clock"></i>
             <h1>Alarm Clock</h1>
         </div>
-        
+
         <div class="content-card">
-            <div class="current-time">
-                <div id="current-time">--:--:--</div>
-                <div id="current-date">Loading...</div>
+            <div class="current-time-display">
+                <div id="current-time" class="time">--:--:--</div>
+                <div id="current-date" class="date">--/--/----</div>
             </div>
 
-            <div class="alarm-controls">
-                <div class="time-input-group">
-                    <label for="alarm-hour">Hour</label>
-                    <input type="number" id="alarm-hour" min="0" max="23" value="7">
+            <div class="alarm-setup">
+                <div class="time-inputs">
+                    <input type="number" id="alarm-hour" placeholder="Hour" min="0" max="23" class="time-input">
+                    <span class="time-separator">:</span>
+                    <input type="number" id="alarm-minute" placeholder="Min" min="0" max="59" class="time-input">
                 </div>
-                <div class="time-input-group">
-                    <label for="alarm-minute">Minute</label>
-                    <input type="number" id="alarm-minute" min="0" max="59" value="0">
+                
+                <div class="alarm-controls">
+                    <button id="set-alarm" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Set Alarm
+                    </button>
+                    <button id="stop-alarm" class="btn btn-danger" style="display: none;">
+                        <i class="fas fa-stop"></i> Stop Alarm
+                    </button>
+                    <button id="snooze-alarm" class="btn btn-warning" style="display: none;">
+                        <i class="fas fa-bed"></i> Snooze (5min)
+                    </button>
+                </div>
+                
+                <div id="alarm-status" class="alarm-status"></div>
+            </div>
+
+            <div class="alarm-section">
+                <h3>Alarms</h3>
+                
+                <!-- Quick Alarm Buttons -->
+                <div class="quick-alarms">
+                    <button class="quick-alarm-btn" onclick="addQuickAlarm(1)">
+                        <i class="fas fa-plus"></i> +1 Hour
+                    </button>
+                    <button class="quick-alarm-btn" onclick="addQuickAlarm(2)">
+                        <i class="fas fa-plus"></i> +2 Hours
+                    </button>
+                    <button class="quick-alarm-btn" onclick="addQuickAlarm(4)">
+                        <i class="fas fa-plus"></i> +4 Hours
+                    </button>
+                </div>
+                
+                <!-- Alarm Management -->
+                <div class="alarm-management">
+                    <button class="alarm-manage-btn" onclick="enableAllAlarms()" title="Enable all disabled alarms">
+                        <i class="fas fa-play"></i> Enable All
+                    </button>
+                    <button class="alarm-manage-btn" onclick="disableAllAlarms()" title="Disable all active alarms">
+                        <i class="fas fa-pause"></i> Disable All
+                    </button>
+                    <button class="alarm-manage-btn danger" onclick="clearAllAlarms()" title="Delete all alarms">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                </div>
+                
+                <div id="alarm-display" class="alarm-display">
+                    <p class="no-alarm">No alarms set</p>
                 </div>
             </div>
-
-            <div class="alarm-actions">
-                <button id="set-alarm" class="btn btn-primary">
-                    <i class="fas fa-bell"></i> Set Alarm
-                </button>
-                <button id="stop-alarm" class="btn btn-danger" style="display: none;">
-                    <i class="fas fa-stop"></i> Stop Alarm
-                </button>
-            </div>
-
-            <div id="alarm-status" class="alarm-status"></div>
         </div>
     </div>
 
@@ -84,25 +133,32 @@
 
         <div class="content-card">
             <div class="stopwatch-display">
-                <div id="stopwatch-time">00:00:00</div>
-                <div id="stopwatch-milliseconds">.000</div>
+                <div class="time-display">
+                    <span id="stopwatch-time" class="main-time">00:00:00</span>
+                    <span id="stopwatch-milliseconds" class="milliseconds">.00</span>
+                </div>
             </div>
 
             <div class="stopwatch-controls">
-                <button id="start-stopwatch" class="btn btn-success">
+                <button id="start-stopwatch" class="btn btn-primary">
                     <i class="fas fa-play"></i> Start
                 </button>
-                <button id="pause-stopwatch" class="btn btn-warning" style="display: none;">
+                <button id="pause-stopwatch" class="btn btn-secondary" style="display: none;">
                     <i class="fas fa-pause"></i> Pause
                 </button>
-                <button id="reset-stopwatch" class="btn btn-secondary">
+                <button id="lap-stopwatch" class="btn btn-info">
+                    <i class="fas fa-flag"></i> Lap
+                </button>
+                <button id="reset-stopwatch" class="btn btn-danger">
                     <i class="fas fa-redo"></i> Reset
                 </button>
             </div>
 
-            <div class="lap-times">
+            <div class="laps-section">
                 <h3>Lap Times</h3>
-                <div id="lap-list" class="lap-list"></div>
+                <div id="lap-list" class="lap-list">
+                    <p class="no-laps">No laps recorded</p>
+                </div>
             </div>
         </div>
     </div>
@@ -156,6 +212,9 @@
         <div class="feature-header">
             <i class="fas fa-cloud-sun"></i>
             <h1>Weather</h1>
+            <button id="refresh-weather" class="refresh-btn" title="Refresh weather data">
+                <i class="fas fa-sync-alt"></i>
+            </button>
         </div>
 
         <div class="weather-content">
@@ -182,26 +241,27 @@
                     </div>
                 </div>
 
-                <div class="weather-details">
-                    <div class="detail-item">
-                        <i class="fas fa-tint"></i>
-                        <span>Humidity: <span id="weather-humidity">--</span>%</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-wind"></i>
-                        <span>Wind: <span id="weather-wind">--</span> km/h</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-eye"></i>
-                        <span>Visibility: <span id="weather-visibility">--</span> km</span>
-                    </div>
+                <div id="weather-details" class="weather-details">
+                    <!-- Detailed weather info will be populated by JavaScript -->
+                </div>
+
+                <div id="sun-info" class="sun-info">
+                    <!-- Sunrise/sunset info will be populated by JavaScript -->
+                </div>
+
+                <div id="forecast-container" class="forecast-container">
+                    <!-- 5-day forecast will be populated by JavaScript -->
+                </div>
+
+                <div id="additional-info" class="additional-info">
+                    <!-- Additional location and time info will be populated by JavaScript -->
                 </div>
             </div>
 
             <div id="weather-error" class="weather-error" style="display: none;">
                 <i class="fas fa-exclamation-triangle"></i>
                 <p>Unable to load weather data</p>
-                <p style="font-size: 0.9rem; opacity: 0.8;">Check your API key in config.js</p>
+                <p style="font-size: 0.9rem; opacity: 0.8;">Check your internet connection and location permissions</p>
                 <button id="retry-weather" class="btn btn-primary">Retry</button>
             </div>
         </div>
@@ -234,6 +294,6 @@
         </div>
     </div>
 
-    <script src="src/js/app.js"></script>
+            <script src="src/js/app.js?v=1.7"></script>
 </body>
 </html> 

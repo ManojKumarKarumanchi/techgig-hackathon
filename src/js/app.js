@@ -2,31 +2,40 @@
 // Focused on the hackathon problem statement
 
 // Global variables
-let currentOrientation = '';
+let currentOrientation = 'unknown';
+let landscapeFeatureToggle = 'stopwatch';
+let currentTheme = 'light';
+let timeFormat = '24'; // 24 or 12 hour format
+let isFullscreen = false;
+
+// Alarm variables (multiple alarms)
+let alarms = [];
 let alarmInterval = null;
-let alarmTime = null;
-let alarmAudio = null;
+let snoozeTime = null;
+let nextAlarmId = 1;
+
+// Stopwatch variables
 let stopwatchInterval = null;
-let stopwatchStartTime = null;
 let stopwatchElapsed = 0;
 let stopwatchRunning = false;
 let lapTimes = [];
+let startTime = null;
+
+// Timer variables
 let timerInterval = null;
-let timerEndTime = null;
+let timerSeconds = 0;
 let timerRunning = false;
-let landscapeFeatureToggle = 'stopwatch'; // Track which landscape feature to show
+
+// Weather variables
+let weatherData = null;
+let weatherUpdateInterval = null;
+let lastWeatherUpdate = null;
+let currentLocation = null;
 
 // DOM elements
-const loadingScreen = document.getElementById('loading');
-const orientationIndicator = document.getElementById('orientation-indicator');
-const orientationText = document.getElementById('orientation-text');
-const desktopFallback = document.getElementById('desktop-fallback');
-
-// Feature containers
-const alarmContainer = document.getElementById('alarm');
-const stopwatchContainer = document.getElementById('stopwatch');
-const timerContainer = document.getElementById('timer');
-const weatherContainer = document.getElementById('weather');
+let alarmContainer, stopwatchContainer, timerContainer, weatherContainer;
+let desktopFallback, orientationIndicator, orientationText;
+let loadingScreen;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -34,36 +43,173 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    // Check if device supports orientation
+    // Get DOM elements
+    alarmContainer = document.getElementById('alarm');
+    stopwatchContainer = document.getElementById('stopwatch');
+    timerContainer = document.getElementById('timer');
+    weatherContainer = document.getElementById('weather');
+    desktopFallback = document.getElementById('desktop-fallback');
+    orientationIndicator = document.getElementById('orientation-indicator');
+    orientationText = document.getElementById('orientation-text');
+    loadingScreen = document.getElementById('loading');
+
+    // Check if mobile device
     if (!isMobileDevice()) {
         showDesktopFallback();
         return;
     }
 
-    // Hide desktop fallback since mobile detection succeeded
+    // Hide desktop fallback for mobile devices
     desktopFallback.style.display = 'none';
 
-    // Initialize all features first
+    // Initialize all features
     initializeAlarmClock();
     initializeStopwatch();
     initializeTimer();
     initializeWeather();
-    
+    initializeTheme();
+
     // Setup orientation detection
     setupOrientationDetection();
-    
-    // Hide loading screen after initialization
+
+    // Hide loading screen
     setTimeout(() => {
         loadingScreen.style.opacity = '0';
         setTimeout(() => {
             loadingScreen.style.display = 'none';
-            
-            // Ensure at least one feature is shown
-            if (!document.querySelector('.feature-container.active')) {
-                updateOrientation('portrait-upright');
-            }
         }, 500);
-    }, 2000);
+    }, 1000);
+}
+
+// Theme functionality
+function initializeTheme() {
+    // Get theme from localStorage or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const savedTimeFormat = localStorage.getItem('timeFormat');
+    
+    if (savedTheme) {
+        currentTheme = savedTheme;
+    } else {
+        // Check system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        currentTheme = prefersDark ? 'dark' : 'light';
+    }
+    
+    // Set time format - default to '24' if not saved
+    if (savedTimeFormat) {
+        timeFormat = savedTimeFormat;
+    } else {
+        timeFormat = '24'; // Default to 24-hour format for IST
+        localStorage.setItem('timeFormat', timeFormat);
+    }
+    
+    applyTheme(currentTheme);
+    addThemeToggle();
+    addTimeFormatToggle();
+    addFullscreenToggle();
+    
+    // Update current time immediately
+    updateCurrentTime();
+    
+    // Start time updates
+    setInterval(updateCurrentTime, 1000);
+}
+
+function addThemeToggle() {
+    const themeToggle = document.createElement('button');
+    themeToggle.className = 'theme-toggle';
+    themeToggle.innerHTML = currentTheme === 'dark' ? '☀️' : '🌙';
+    themeToggle.title = 'Toggle theme';
+    themeToggle.onclick = toggleTheme;
+    orientationIndicator.appendChild(themeToggle);
+}
+
+function addTimeFormatToggle() {
+    const timeFormatToggle = document.createElement('button');
+    timeFormatToggle.className = 'time-format-toggle';
+    timeFormatToggle.textContent = timeFormat === '24' ? '24H' : '12H';
+    timeFormatToggle.title = 'Toggle time format';
+    timeFormatToggle.onclick = toggleTimeFormat;
+    orientationIndicator.appendChild(timeFormatToggle);
+}
+
+function addFullscreenToggle() {
+    const fullscreenToggle = document.createElement('button');
+    fullscreenToggle.className = 'fullscreen-toggle';
+    fullscreenToggle.innerHTML = '⛶';
+    fullscreenToggle.title = 'Toggle fullscreen';
+    fullscreenToggle.onclick = toggleFullscreen;
+    orientationIndicator.appendChild(fullscreenToggle);
+}
+
+function toggleTheme() {
+    // Add transition class for smooth theme switching
+    document.body.classList.add('theme-transitioning');
+    
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', currentTheme);
+    applyTheme(currentTheme);
+    
+    // Update theme toggle button
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) {
+        themeToggle.innerHTML = currentTheme === 'dark' ? '☀️' : '🌙';
+    }
+    
+    // Remove transition class after animation completes
+    setTimeout(() => {
+        document.body.classList.remove('theme-transitioning');
+    }, 400); // Match the transition speed from CSS
+}
+
+function toggleTimeFormat() {
+    timeFormat = timeFormat === '24' ? '12' : '24';
+    localStorage.setItem('timeFormat', timeFormat);
+    
+    // Update time format toggle button
+    const timeFormatToggle = document.querySelector('.time-format-toggle');
+    if (timeFormatToggle) {
+        timeFormatToggle.textContent = timeFormat === '24' ? '24H' : '12H';
+    }
+    
+    // Update current time display
+    updateCurrentTime();
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+        }
+        isFullscreen = true;
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        isFullscreen = false;
+    }
+}
+
+function applyTheme(theme) {
+    // Remove existing theme classes
+    document.body.classList.remove('light', 'dark', 'light-theme', 'dark-theme');
+    
+    // Add new theme class
+    document.body.classList.add(theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Update currentTheme variable
+    currentTheme = theme;
 }
 
 function setupOrientationDetection() {
@@ -94,7 +240,7 @@ function setupOrientationListeners() {
 // Device detection - Improved for better mobile detection
 function isMobileDevice() {
     // Check user agent
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const userAgent = navigator.userAgent || window.opera;
     const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS|FxiOS/i;
     
     // Check if it's a mobile device via user agent
@@ -250,104 +396,475 @@ function updateOrientation(orientation) {
     }
 }
 
-// FEATURE 1: Alarm Clock
+// Alarm Clock functionality (multiple alarms)
 function initializeAlarmClock() {
-    const setAlarmBtn = document.getElementById('set-alarm');
-    const stopAlarmBtn = document.getElementById('stop-alarm');
-    const alarmHourInput = document.getElementById('alarm-hour');
-    const alarmMinuteInput = document.getElementById('alarm-minute');
-    const alarmStatus = document.getElementById('alarm-status');
+    // Load saved alarms
+    loadSavedAlarms();
     
-    // Update current time
-    updateCurrentTime();
-    setInterval(updateCurrentTime, 1000);
-    
-    // Set alarm button
-    setAlarmBtn.addEventListener('click', () => {
-        const hour = parseInt(alarmHourInput.value);
-        const minute = parseInt(alarmMinuteInput.value);
-        
-        if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
-            setAlarm(hour, minute);
-        } else {
-            alarmStatus.textContent = 'Please enter valid time (0-23 hours, 0-59 minutes)';
-        }
+    // Set up event listeners
+    document.getElementById('set-alarm').addEventListener('click', () => {
+        const hour = parseInt(document.getElementById('alarm-hour').value);
+        const minute = parseInt(document.getElementById('alarm-minute').value);
+        setAlarm(hour, minute);
     });
     
-    // Stop alarm button
-    stopAlarmBtn.addEventListener('click', stopAlarm);
+    document.getElementById('stop-alarm').addEventListener('click', stopAlarm);
+    document.getElementById('snooze-alarm').addEventListener('click', snoozeAlarm);
     
-    // Check for alarm every second
-    setInterval(checkAlarm, 1000);
+    // Start time updates
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    setInterval(checkAlarms, 1000);
 }
 
 function updateCurrentTime() {
     const now = new Date();
-    const timeString = now.toLocaleTimeString();
-    const dateString = now.toLocaleDateString();
     
-    document.getElementById('current-time').textContent = timeString;
-    document.getElementById('current-date').textContent = dateString;
+    // Use proper IST timezone (Asia/Kolkata)
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    
+    let timeString;
+    if (timeFormat === '24') {
+        timeString = istTime.toLocaleTimeString('en-IN', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit',
+            timeZone: 'Asia/Kolkata'
+        });
+    } else {
+        timeString = istTime.toLocaleTimeString('en-IN', { 
+            hour12: true, 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit',
+            timeZone: 'Asia/Kolkata'
+        });
+    }
+    
+    const dateString = istTime.toLocaleDateString('en-IN', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        timeZone: 'Asia/Kolkata'
+    });
+    
+    const dayString = istTime.toLocaleDateString('en-IN', { 
+        weekday: 'long',
+        timeZone: 'Asia/Kolkata'
+    });
+    
+    document.getElementById('current-time').textContent = `${timeString} (IST)`;
+    document.getElementById('current-date').textContent = `${dateString} (${dayString})`;
 }
 
-function setAlarm(hour, minute) {
-    const now = new Date();
-    alarmTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
+function setAlarm(hour, minute, label = null) {
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+        showAlarmStatus('Please enter valid time (0-23 hours, 0-59 minutes)', 'error');
+        return;
+    }
     
-    if (alarmTime <= now) {
+    // Check for duplicate alarm at the same time
+    const existingAlarm = alarms.find(alarm => 
+        alarm.hour === hour && 
+        alarm.minute === minute && 
+        alarm.enabled
+    );
+    
+    if (existingAlarm) {
+        showAlarmStatus('An alarm already exists at this time', 'error');
+        return;
+    }
+    
+    // Create new alarm
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    const alarmTime = new Date(istTime);
+    alarmTime.setHours(hour, minute, 0, 0);
+    
+    // If alarm time has passed today, set for tomorrow
+    if (alarmTime <= istTime) {
         alarmTime.setDate(alarmTime.getDate() + 1);
     }
     
-    const alarmStatus = document.getElementById('alarm-status');
-    const timeUntilAlarm = Math.floor((alarmTime - now) / 1000);
-    const hours = Math.floor(timeUntilAlarm / 3600);
-    const minutes = Math.floor((timeUntilAlarm % 3600) / 60);
+    const alarmLabel = label || `Alarm for ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
     
-    alarmStatus.textContent = `Alarm set for ${alarmTime.toLocaleTimeString()} (${hours}h ${minutes}m from now)`;
+    const newAlarm = {
+        id: nextAlarmId++,
+        hour: hour,
+        minute: minute,
+        time: alarmTime,
+        enabled: true,
+        label: alarmLabel,
+        repeat: false, // Can be extended for recurring alarms
+        created: new Date()
+    };
     
-    document.getElementById('set-alarm').style.display = 'none';
-    document.getElementById('stop-alarm').style.display = 'flex';
+    alarms.push(newAlarm);
+    saveAlarms();
+    updateAlarmDisplay();
+    
+    const timeUntilAlarm = alarmTime - istTime;
+    const hours = Math.floor(timeUntilAlarm / (1000 * 60 * 60));
+    const minutes = Math.floor((timeUntilAlarm % (1000 * 60 * 60)) / (1000 * 60));
+    
+    showAlarmStatus(`Alarm set for ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} (${hours}h ${minutes}m from now)`, 'set');
+    
+    // Clear input fields
+    document.getElementById('alarm-hour').value = '';
+    document.getElementById('alarm-minute').value = '';
 }
 
-function checkAlarm() {
-    if (alarmTime && new Date() >= alarmTime) {
-        triggerAlarm();
-    }
+function checkAlarms() {
+    if (alarms.length === 0) return;
+    
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    
+    // Update alarm times for next day if needed
+    updateAlarmTimes();
+    
+    // Check all enabled alarms
+    alarms.forEach(alarm => {
+        if (alarm.enabled && istTime >= alarm.time) {
+            triggerAlarm(alarm);
+        }
+    });
 }
 
-function triggerAlarm() {
-    if (!alarmAudio) {
-        alarmAudio = new Audio();
-        alarmAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT';
-        alarmAudio.loop = true;
+function triggerAlarm(alarm) {
+    if (!alarm) return;
+    
+    // Vibrate if supported
+    if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 200]);
     }
     
-    alarmAudio.play();
-    alarmContainer.classList.add('alarm-ringing');
-    
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Alarm', { body: 'Time to wake up!' });
-    } else if ('Notification' in window && Notification.permission !== 'denied') {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                new Notification('Alarm', { body: 'Time to wake up!' });
-            }
+    // Show notification
+    if (Notification.permission === 'granted') {
+        new Notification('Alarm', {
+            body: alarm.label,
+            icon: '/favicon.ico',
+            requireInteraction: true
         });
     }
+    
+    // Show alarm controls
+    document.getElementById('stop-alarm').style.display = 'inline-flex';
+    document.getElementById('snooze-alarm').style.display = 'inline-flex';
+    document.getElementById('set-alarm').style.display = 'none';
+    
+    // Store the triggered alarm for snooze/stop functionality
+    window.currentTriggeredAlarm = alarm;
+    
+    // Play alarm sound (if available)
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+    audio.loop = true;
+    audio.play().catch(() => {}); // Ignore errors if audio fails
+    
+    showAlarmStatus(`ALARM! ${alarm.label}`, 'active');
 }
 
 function stopAlarm() {
-    if (alarmAudio) {
-        alarmAudio.pause();
-        alarmAudio.currentTime = 0;
+    if (navigator.vibrate) {
+        navigator.vibrate(0);
     }
     
-    alarmContainer.classList.remove('alarm-ringing');
-    alarmTime = null;
-    
-    document.getElementById('set-alarm').style.display = 'flex';
+    // Hide alarm controls
     document.getElementById('stop-alarm').style.display = 'none';
-    document.getElementById('alarm-status').textContent = '';
+    document.getElementById('snooze-alarm').style.display = 'none';
+    document.getElementById('set-alarm').style.display = 'inline-flex';
+    
+    // Stop audio
+    const audios = document.querySelectorAll('audio');
+    audios.forEach(audio => audio.pause());
+    
+    // Disable the triggered alarm
+    if (window.currentTriggeredAlarm) {
+        const alarmIndex = alarms.findIndex(a => a.id === window.currentTriggeredAlarm.id);
+        if (alarmIndex !== -1) {
+            alarms[alarmIndex].enabled = false;
+            saveAlarms();
+            updateAlarmDisplay();
+        }
+        window.currentTriggeredAlarm = null;
+    }
+    
+    showAlarmStatus('Alarm stopped', 'stopped');
+}
+
+function snoozeAlarm() {
+    stopAlarm();
+    
+    // Set snooze for 5 minutes from now
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    const snoozeTime = new Date(istTime.getTime() + (5 * 60 * 1000));
+    
+    const snoozeAlarm = {
+        id: nextAlarmId++,
+        hour: snoozeTime.getHours(),
+        minute: snoozeTime.getMinutes(),
+        time: snoozeTime,
+        enabled: true,
+        label: 'Snooze Alarm (5 minutes)',
+        repeat: false,
+        created: new Date()
+    };
+    
+    alarms.push(snoozeAlarm);
+    saveAlarms();
+    updateAlarmDisplay();
+    
+    showAlarmStatus('Alarm snoozed for 5 minutes', 'snooze');
+}
+
+function saveAlarms() {
+    const alarmsToSave = alarms.map(alarm => ({
+        ...alarm,
+        time: alarm.time.toISOString(),
+        created: alarm.created.toISOString()
+    }));
+    localStorage.setItem('alarms', JSON.stringify(alarmsToSave));
+    localStorage.setItem('nextAlarmId', nextAlarmId.toString());
+}
+
+function loadSavedAlarms() {
+    const saved = localStorage.getItem('alarms');
+    const savedNextId = localStorage.getItem('nextAlarmId');
+    
+    if (saved) {
+        const alarmsData = JSON.parse(saved);
+        alarms = alarmsData.map(alarmData => ({
+            ...alarmData,
+            time: new Date(alarmData.time),
+            created: new Date(alarmData.created)
+        }));
+    }
+    
+    if (savedNextId) {
+        nextAlarmId = parseInt(savedNextId);
+    }
+    
+    updateAlarmDisplay();
+}
+
+function updateAlarmDisplay() {
+    const alarmDisplay = document.getElementById('alarm-display');
+    if (!alarmDisplay) return;
+    
+    const enabledAlarms = alarms.filter(alarm => alarm.enabled);
+    const disabledAlarms = alarms.filter(alarm => !alarm.enabled);
+    
+    if (alarms.length === 0) {
+        alarmDisplay.innerHTML = '<p class="no-alarm">No alarms set</p>';
+        return;
+    }
+    
+    let html = '<div class="alarms-list">';
+    
+    // Show enabled alarms first
+    if (enabledAlarms.length > 0) {
+        html += '<div class="alarms-section"><h4>Active Alarms</h4>';
+        enabledAlarms.forEach(alarm => {
+            const timeString = alarm.time.toLocaleTimeString('en-IN', { 
+                hour12: timeFormat === '12',
+                hour: '2-digit', 
+                minute: '2-digit',
+                timeZone: 'Asia/Kolkata'
+            });
+            const dateString = alarm.time.toLocaleDateString('en-IN', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric',
+                timeZone: 'Asia/Kolkata'
+            });
+            
+            // Calculate time until alarm
+            const now = new Date();
+            const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+            const timeUntilAlarm = alarm.time - istTime;
+            const hours = Math.floor(timeUntilAlarm / (1000 * 60 * 60));
+            const minutes = Math.floor((timeUntilAlarm % (1000 * 60 * 60)) / (1000 * 60));
+            
+            html += `
+                <div class="alarm-item enabled" data-alarm-id="${alarm.id}">
+                    <div class="alarm-info">
+                        <div class="alarm-time">${timeString}</div>
+                        <div class="alarm-date">${dateString}</div>
+                        <div class="alarm-label">${alarm.label}</div>
+                        <div class="alarm-countdown">${hours}h ${minutes}m from now</div>
+                    </div>
+                    <div class="alarm-controls">
+                        <button class="alarm-toggle" onclick="toggleAlarm(${alarm.id})" title="Disable Alarm">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                        <button class="alarm-delete" onclick="deleteAlarm(${alarm.id})" title="Delete Alarm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    // Show disabled alarms
+    if (disabledAlarms.length > 0) {
+        html += '<div class="alarms-section"><h4>Disabled Alarms</h4>';
+        disabledAlarms.forEach(alarm => {
+            const timeString = alarm.time.toLocaleTimeString('en-IN', { 
+                hour12: timeFormat === '12',
+                hour: '2-digit', 
+                minute: '2-digit',
+                timeZone: 'Asia/Kolkata'
+            });
+            const dateString = alarm.time.toLocaleDateString('en-IN', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric',
+                timeZone: 'Asia/Kolkata'
+            });
+            
+            html += `
+                <div class="alarm-item disabled" data-alarm-id="${alarm.id}">
+                    <div class="alarm-info">
+                        <div class="alarm-time">${timeString}</div>
+                        <div class="alarm-date">${dateString}</div>
+                        <div class="alarm-label">${alarm.label}</div>
+                    </div>
+                    <div class="alarm-controls">
+                        <button class="alarm-toggle" onclick="toggleAlarm(${alarm.id})" title="Enable Alarm">
+                            <i class="fas fa-bell-slash"></i>
+                        </button>
+                        <button class="alarm-delete" onclick="deleteAlarm(${alarm.id})" title="Delete Alarm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    alarmDisplay.innerHTML = html;
+}
+
+function toggleAlarm(alarmId) {
+    const alarmIndex = alarms.findIndex(a => a.id === alarmId);
+    if (alarmIndex !== -1) {
+        alarms[alarmIndex].enabled = !alarms[alarmIndex].enabled;
+        saveAlarms();
+        updateAlarmDisplay();
+        
+        const status = alarms[alarmIndex].enabled ? 'enabled' : 'disabled';
+        showAlarmStatus(`Alarm ${status}`, status);
+    }
+}
+
+function deleteAlarm(alarmId) {
+    const alarmIndex = alarms.findIndex(a => a.id === alarmId);
+    if (alarmIndex !== -1) {
+        const deletedAlarm = alarms[alarmIndex];
+        alarms.splice(alarmIndex, 1);
+        saveAlarms();
+        updateAlarmDisplay();
+        showAlarmStatus(`Alarm "${deletedAlarm.label}" deleted`, 'deleted');
+    }
+}
+
+function showAlarmStatus(message, type) {
+    const statusElement = document.getElementById('alarm-status');
+    if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = `alarm-status ${type}`;
+        
+        // Clear status after 3 seconds
+        setTimeout(() => {
+            statusElement.textContent = '';
+            statusElement.className = 'alarm-status';
+        }, 3000);
+    }
+}
+
+// Additional alarm management functions
+function addQuickAlarm(hoursFromNow = 1) {
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    const alarmTime = new Date(istTime.getTime() + (hoursFromNow * 60 * 60 * 1000));
+    
+    const hour = alarmTime.getHours();
+    const minute = alarmTime.getMinutes();
+    
+    setAlarm(hour, minute, `Quick Alarm (${hoursFromNow}h from now)`);
+}
+
+function clearAllAlarms() {
+    if (alarms.length === 0) {
+        showAlarmStatus('No alarms to clear', 'info');
+        return;
+    }
+    
+    alarms = [];
+    saveAlarms();
+    updateAlarmDisplay();
+    showAlarmStatus('All alarms cleared', 'deleted');
+}
+
+function enableAllAlarms() {
+    const disabledAlarms = alarms.filter(alarm => !alarm.enabled);
+    if (disabledAlarms.length === 0) {
+        showAlarmStatus('No disabled alarms to enable', 'info');
+        return;
+    }
+    
+    alarms.forEach(alarm => alarm.enabled = true);
+    saveAlarms();
+    updateAlarmDisplay();
+    showAlarmStatus(`${disabledAlarms.length} alarms enabled`, 'enabled');
+}
+
+function disableAllAlarms() {
+    const enabledAlarms = alarms.filter(alarm => alarm.enabled);
+    if (enabledAlarms.length === 0) {
+        showAlarmStatus('No active alarms to disable', 'info');
+        return;
+    }
+    
+    alarms.forEach(alarm => alarm.enabled = false);
+    saveAlarms();
+    updateAlarmDisplay();
+    showAlarmStatus(`${enabledAlarms.length} alarms disabled`, 'disabled');
+}
+
+function getNextAlarm() {
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    
+    const enabledAlarms = alarms.filter(alarm => alarm.enabled && alarm.time > istTime);
+    if (enabledAlarms.length === 0) return null;
+    
+    return enabledAlarms.reduce((next, alarm) => 
+        alarm.time < next.time ? alarm : next
+    );
+}
+
+function updateAlarmTimes() {
+    // Update alarm times for next day if they've passed
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    
+    alarms.forEach(alarm => {
+        if (alarm.time <= istTime && alarm.enabled) {
+            // Set alarm for next day
+            const nextDay = new Date(alarm.time);
+            nextDay.setDate(nextDay.getDate() + 1);
+            alarm.time = nextDay;
+        }
+    });
+    
+    saveAlarms();
 }
 
 // FEATURE 2: Stopwatch
@@ -355,21 +872,34 @@ function initializeStopwatch() {
     const startBtn = document.getElementById('start-stopwatch');
     const pauseBtn = document.getElementById('pause-stopwatch');
     const resetBtn = document.getElementById('reset-stopwatch');
+    const lapBtn = document.getElementById('lap-stopwatch');
     
     startBtn.addEventListener('click', startStopwatch);
     pauseBtn.addEventListener('click', pauseStopwatch);
     resetBtn.addEventListener('click', resetStopwatch);
+    if (lapBtn) {
+        lapBtn.addEventListener('click', addLap);
+    }
+    
+    // Double-click to add lap
     startBtn.addEventListener('dblclick', addLap);
+    pauseBtn.addEventListener('dblclick', addLap);
+    
+    // Load saved stopwatch data
+    loadStopwatchData();
 }
 
 function startStopwatch() {
     if (!stopwatchRunning) {
         stopwatchRunning = true;
         stopwatchStartTime = Date.now() - stopwatchElapsed;
-        stopwatchInterval = setInterval(updateStopwatch, 10);
+        stopwatchInterval = setInterval(updateStopwatch, 10); // 10ms precision
         
         document.getElementById('start-stopwatch').style.display = 'none';
         document.getElementById('pause-stopwatch').style.display = 'flex';
+        
+        // Save running state
+        saveStopwatchData();
     }
 }
 
@@ -381,6 +911,9 @@ function pauseStopwatch() {
         
         document.getElementById('start-stopwatch').style.display = 'flex';
         document.getElementById('pause-stopwatch').style.display = 'none';
+        
+        // Save state
+        saveStopwatchData();
     }
 }
 
@@ -390,6 +923,9 @@ function resetStopwatch() {
     updateStopwatchDisplay(0);
     lapTimes = [];
     updateLapList();
+    
+    // Clear saved data
+    localStorage.removeItem('stopwatchData');
 }
 
 function updateStopwatch() {
@@ -403,37 +939,148 @@ function updateStopwatchDisplay(elapsed) {
     const seconds = Math.floor((elapsed % 60000) / 1000);
     const milliseconds = Math.floor((elapsed % 1000) / 10);
     
-    document.getElementById('stopwatch-time').textContent = 
-        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    document.getElementById('stopwatch-milliseconds').textContent = `.${milliseconds.toString().padStart(3, '0')}`;
+    const timeDisplay = document.getElementById('stopwatch-time');
+    const msDisplay = document.getElementById('stopwatch-milliseconds');
+    
+    if (timeDisplay) {
+        // Show hours only if > 0
+        if (hours > 0) {
+            timeDisplay.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        } else {
+            timeDisplay.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+    }
+    if (msDisplay) {
+        msDisplay.textContent = `.${milliseconds.toString().padStart(2, '0')}`;
+    }
 }
 
 function addLap() {
     if (stopwatchRunning) {
         const currentTime = Date.now() - stopwatchStartTime;
-        lapTimes.push(currentTime);
+        const lapTime = currentTime - (lapTimes.length > 0 ? lapTimes[lapTimes.length - 1].totalTime : 0);
+        
+        // Get current IST time for lap timestamp
+        const now = new Date();
+        const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+        
+        lapTimes.push({
+            totalTime: currentTime,
+            lapTime: lapTime,
+            timestamp: istTime
+        });
+        
         updateLapList();
+        saveStopwatchData();
     }
 }
 
 function updateLapList() {
     const lapList = document.getElementById('lap-list');
+    if (!lapList) return;
+    
     lapList.innerHTML = '';
     
-    lapTimes.forEach((lapTime, index) => {
-        const hours = Math.floor(lapTime / 3600000);
-        const minutes = Math.floor((lapTime % 3600000) / 60000);
-        const seconds = Math.floor((lapTime % 60000) / 1000);
-        const milliseconds = Math.floor((lapTime % 1000) / 10);
+    if (lapTimes.length === 0) {
+        lapList.innerHTML = '<p class="no-laps">No laps recorded</p>';
+        return;
+    }
+    
+    // Find fastest and slowest laps
+    const lapTimesOnly = lapTimes.map(lap => lap.lapTime);
+    const fastestLap = Math.min(...lapTimesOnly);
+    const slowestLap = Math.max(...lapTimesOnly);
+    
+    lapTimes.forEach((lap, index) => {
+        const totalHours = Math.floor(lap.totalTime / 3600000);
+        const totalMinutes = Math.floor((lap.totalTime % 3600000) / 60000);
+        const totalSeconds = Math.floor((lap.totalTime % 60000) / 1000);
+        const totalMs = Math.floor((lap.totalTime % 1000) / 10);
+        
+        const lapHours = Math.floor(lap.lapTime / 3600000);
+        const lapMinutes = Math.floor((lap.lapTime % 3600000) / 60000);
+        const lapSeconds = Math.floor((lap.lapTime % 60000) / 1000);
+        const lapMs = Math.floor((lap.lapTime % 1000) / 10);
+        
+        const isFastest = lap.lapTime === fastestLap;
+        const isSlowest = lap.lapTime === slowestLap;
         
         const lapItem = document.createElement('div');
-        lapItem.className = 'lap-item';
+        lapItem.className = `lap-item ${isFastest ? 'fastest' : ''} ${isSlowest ? 'slowest' : ''}`;
+        
+        // Format lap time display
+        let lapTimeDisplay, totalTimeDisplay;
+        
+        if (lapHours > 0) {
+            lapTimeDisplay = `${lapHours.toString().padStart(2, '0')}:${lapMinutes.toString().padStart(2, '0')}:${lapSeconds.toString().padStart(2, '0')}.${lapMs.toString().padStart(2, '0')}`;
+        } else {
+            lapTimeDisplay = `${lapMinutes.toString().padStart(2, '0')}:${lapSeconds.toString().padStart(2, '0')}.${lapMs.toString().padStart(2, '0')}`;
+        }
+        
+        if (totalHours > 0) {
+            totalTimeDisplay = `${totalHours.toString().padStart(2, '0')}:${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}.${totalMs.toString().padStart(2, '0')}`;
+        } else {
+            totalTimeDisplay = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}.${totalMs.toString().padStart(2, '0')}`;
+        }
+        
+        // Format timestamp in IST
+        const timestampString = lap.timestamp.toLocaleTimeString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        
         lapItem.innerHTML = `
-            <span>Lap ${index + 1}</span>
-            <span>${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}</span>
+            <div class="lap-header">
+                <span class="lap-number">Lap ${index + 1}</span>
+                <span class="lap-time">${lapTimeDisplay}</span>
+            </div>
+            <div class="lap-details">
+                <span class="total-time">Total: ${totalTimeDisplay}</span>
+                <span class="lap-timestamp">${timestampString}</span>
+            </div>
         `;
+        
         lapList.appendChild(lapItem);
     });
+}
+
+function saveStopwatchData() {
+    const data = {
+        elapsed: stopwatchElapsed,
+        running: stopwatchRunning,
+        lapTimes: lapTimes,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('stopwatchData', JSON.stringify(data));
+}
+
+function loadStopwatchData() {
+    const saved = localStorage.getItem('stopwatchData');
+    if (saved) {
+        const data = JSON.parse(saved);
+        stopwatchElapsed = data.elapsed || 0;
+        stopwatchRunning = data.running || false;
+        lapTimes = data.lapTimes || [];
+        
+        // Convert timestamp strings back to Date objects
+        lapTimes.forEach(lap => {
+            if (lap.timestamp) {
+                lap.timestamp = new Date(lap.timestamp);
+            }
+        });
+        
+        updateStopwatchDisplay(stopwatchElapsed);
+        updateLapList();
+        
+        // Restore running state if it was running
+        if (stopwatchRunning) {
+            startStopwatch();
+        }
+    }
 }
 
 // FEATURE 3: Timer
@@ -528,7 +1175,24 @@ function timerComplete() {
 // FEATURE 4: Weather
 function initializeWeather() {
     const retryBtn = document.getElementById('retry-weather');
+    const refreshBtn = document.getElementById('refresh-weather');
+    
     retryBtn.addEventListener('click', loadWeatherData);
+    refreshBtn.addEventListener('click', () => {
+        // Add spinning animation
+        const icon = refreshBtn.querySelector('i');
+        icon.classList.add('fa-spin');
+        
+        loadWeatherData().finally(() => {
+            // Remove spinning animation after 1 second
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+            }, 1000);
+        });
+    });
+    
+    // Start automatic weather updates
+    startWeatherUpdates();
     
     if (weatherContainer.classList.contains('active')) {
         loadWeatherData();
@@ -545,22 +1209,42 @@ async function loadWeatherData() {
     weatherError.style.display = 'none';
     
     try {
-        const position = await getCurrentPosition();
-        const { latitude, longitude } = position.coords;
+        let latitude, longitude;
+        
+        // Use current location if available, otherwise get new position
+        if (currentLocation) {
+            latitude = currentLocation.latitude;
+            longitude = currentLocation.longitude;
+        } else {
+            const position = await getCurrentPosition();
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
+            currentLocation = { latitude, longitude };
+        }
         
         const apiKey = 'a481ce21915ef7d512dc450ab857113c';
+        
+        // Fetch current weather
         const weatherResponse = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`);
         
         if (!weatherResponse.ok) {
-            if (weatherResponse.status === 401) {
-                displayDemoWeatherData();
-                return;
-            }
             throw new Error('Weather API not available');
         }
         
-        const data = await weatherResponse.json();
-        displayWeatherData(data);
+        const weatherData = await weatherResponse.json();
+        
+        // Fetch 5-day forecast
+        const forecastResponse = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`);
+        let forecastData = null;
+        
+        if (forecastResponse.ok) {
+            forecastData = await forecastResponse.json();
+        }
+        
+        // Update last update time
+        lastWeatherUpdate = new Date();
+        
+        displayWeatherData(weatherData, forecastData);
         
     } catch (error) {
         console.error('Weather error:', error);
@@ -582,38 +1266,219 @@ function getCurrentPosition() {
     });
 }
 
-function displayWeatherData(data) {
+function displayWeatherData(data, forecastData = null) {
     const weatherLoading = document.getElementById('weather-loading');
     const weatherData = document.getElementById('weather-data');
     
     weatherLoading.style.display = 'none';
     weatherData.style.display = 'block';
     
+    // Basic weather info
     document.getElementById('weather-location').textContent = data.name || 'Unknown Location';
     document.getElementById('weather-temp').textContent = Math.round(data.main.temp);
     document.getElementById('weather-description').textContent = data.weather[0].description;
-    document.getElementById('weather-humidity').textContent = data.main.humidity;
-    document.getElementById('weather-wind').textContent = Math.round(data.wind.speed * 3.6);
-    document.getElementById('weather-visibility').textContent = Math.round(data.visibility / 1000);
     
+    // Detailed weather information
+    const weatherDetails = document.getElementById('weather-details');
+    if (weatherDetails) {
+        weatherDetails.innerHTML = `
+            <div class="detail-item">
+                <i class="fas fa-thermometer-half"></i>
+                <span>Feels like: <span id="weather-feels-like">${Math.round(data.main.feels_like)}</span>°C</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-thermometer-empty"></i>
+                <span>Min: <span id="weather-temp-min">${Math.round(data.main.temp_min)}</span>°C</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-thermometer-full"></i>
+                <span>Max: <span id="weather-temp-max">${Math.round(data.main.temp_max)}</span>°C</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-tint"></i>
+                <span>Humidity: <span id="weather-humidity">${data.main.humidity}</span>%</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-compress-alt"></i>
+                <span>Pressure: <span id="weather-pressure">${data.main.pressure}</span> hPa</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-wind"></i>
+                <span>Wind: <span id="weather-wind">${Math.round(data.wind.speed * 3.6)}</span> km/h</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-compass"></i>
+                <span>Direction: <span id="weather-wind-direction">${getWindDirection(data.wind.deg)}</span></span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-eye"></i>
+                <span>Visibility: <span id="weather-visibility">${Math.round(data.visibility / 1000)}</span> km</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-cloud"></i>
+                <span>Clouds: <span id="weather-clouds">${data.clouds.all}</span>%</span>
+            </div>
+        `;
+    }
+    
+    // Sunrise and sunset times
+    const sunInfo = document.getElementById('sun-info');
+    if (sunInfo && data.sys) {
+        const sunrise = new Date(data.sys.sunrise * 1000);
+        const sunset = new Date(data.sys.sunset * 1000);
+        
+        sunInfo.innerHTML = `
+            <div class="sun-item">
+                <i class="fas fa-sunrise"></i>
+                <span>Sunrise: ${sunrise.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <div class="sun-item">
+                <i class="fas fa-sunset"></i>
+                <span>Sunset: ${sunset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+        `;
+    }
+    
+    // Weather icon
     const weatherIcon = document.getElementById('weather-icon');
     const weatherCode = data.weather[0].id;
+    weatherIcon.className = getWeatherIconClass(weatherCode);
     
-    if (weatherCode >= 200 && weatherCode < 300) {
-        weatherIcon.className = 'fas fa-bolt';
-    } else if (weatherCode >= 300 && weatherCode < 400) {
-        weatherIcon.className = 'fas fa-cloud-rain';
-    } else if (weatherCode >= 500 && weatherCode < 600) {
-        weatherIcon.className = 'fas fa-cloud-showers-heavy';
-    } else if (weatherCode >= 600 && weatherCode < 700) {
-        weatherIcon.className = 'fas fa-snowflake';
-    } else if (weatherCode >= 700 && weatherCode < 800) {
-        weatherIcon.className = 'fas fa-smog';
-    } else if (weatherCode === 800) {
-        weatherIcon.className = 'fas fa-sun';
-    } else if (weatherCode >= 801 && weatherCode < 900) {
-        weatherIcon.className = 'fas fa-cloud';
+    // Display forecast if available
+    if (forecastData) {
+        displayForecast(forecastData);
     }
+    
+    // Additional weather details
+    const additionalInfo = document.getElementById('additional-info');
+    if (additionalInfo) {
+        const country = data.sys.country || '';
+        const timezone = data.timezone || 0;
+        const localTime = new Date(Date.now() + (timezone * 1000));
+        
+        // Get IST time
+        const istTime = new Date(Date.now() + (5.5 * 60 * 60 * 1000));
+        
+        // Format last update time
+        const lastUpdateText = lastWeatherUpdate ? 
+            lastWeatherUpdate.toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }) : 'Just now';
+        
+        additionalInfo.innerHTML = `
+            <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Country: ${country}</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <span>Local Time: ${localTime.toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                })}</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-globe"></i>
+                <span>IST Time: ${istTime.toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                })}</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-calendar"></i>
+                <span>Date: ${istTime.toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                })}</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-sync-alt"></i>
+                <span>Last Updated: ${lastUpdateText}</span>
+            </div>
+        `;
+    }
+}
+
+function displayForecast(forecastData) {
+    const forecastContainer = document.getElementById('forecast-container');
+    if (!forecastContainer) return;
+    
+    // Group forecast by day
+    const dailyForecast = {};
+    forecastData.list.forEach(item => {
+        const date = new Date(item.dt * 1000);
+        const day = date.toDateString();
+        
+        if (!dailyForecast[day]) {
+            dailyForecast[day] = [];
+        }
+        dailyForecast[day].push(item);
+    });
+    
+    // Get daily averages
+    const dailyAverages = Object.keys(dailyForecast).map(day => {
+        const dayData = dailyForecast[day];
+        const avgTemp = dayData.reduce((sum, item) => sum + item.main.temp, 0) / dayData.length;
+        const avgHumidity = dayData.reduce((sum, item) => sum + item.main.humidity, 0) / dayData.length;
+        const mostCommonWeather = dayData[Math.floor(dayData.length / 2)].weather[0]; // Use middle of day
+        
+        return {
+            day: new Date(day),
+            temp: Math.round(avgTemp),
+            humidity: Math.round(avgHumidity),
+            weather: mostCommonWeather,
+            description: mostCommonWeather.description
+        };
+    }).slice(0, 5); // Show next 5 days
+    
+    forecastContainer.innerHTML = `
+        <h3>5-Day Forecast</h3>
+        <div class="forecast-list">
+            ${dailyAverages.map(day => `
+                <div class="forecast-day">
+                    <div class="forecast-date">${day.day.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                    <div class="forecast-icon">
+                        <i class="${getWeatherIconClass(day.weather.id)}"></i>
+                    </div>
+                    <div class="forecast-temp">${day.temp}°C</div>
+                    <div class="forecast-desc">${day.description}</div>
+                    <div class="forecast-humidity">${day.humidity}%</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function getWindDirection(degrees) {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.round(degrees / 22.5) % 16;
+    return directions[index];
+}
+
+function getWeatherIconClass(weatherCode) {
+    if (weatherCode >= 200 && weatherCode < 300) {
+        return 'fas fa-bolt';
+    } else if (weatherCode >= 300 && weatherCode < 400) {
+        return 'fas fa-cloud-rain';
+    } else if (weatherCode >= 500 && weatherCode < 600) {
+        return 'fas fa-cloud-showers-heavy';
+    } else if (weatherCode >= 600 && weatherCode < 700) {
+        return 'fas fa-snowflake';
+    } else if (weatherCode >= 700 && weatherCode < 800) {
+        return 'fas fa-smog';
+    } else if (weatherCode === 800) {
+        return 'fas fa-sun';
+    } else if (weatherCode >= 801 && weatherCode < 900) {
+        return 'fas fa-cloud';
+    }
+    return 'fas fa-question';
 }
 
 function showWeatherError() {
@@ -624,39 +1489,87 @@ function showWeatherError() {
     weatherError.style.display = 'flex';
 }
 
-function displayDemoWeatherData() {
-    const weatherLoading = document.getElementById('weather-loading');
-    const weatherData = document.getElementById('weather-data');
+// Weather update functions
+function startWeatherUpdates() {
+    // Clear any existing interval
+    if (weatherUpdateInterval) {
+        clearInterval(weatherUpdateInterval);
+    }
     
-    weatherLoading.style.display = 'none';
-    weatherData.style.display = 'block';
+    // Update weather every 10 minutes (600,000 ms)
+    weatherUpdateInterval = setInterval(() => {
+        if (weatherContainer.classList.contains('active')) {
+            loadWeatherData();
+        }
+    }, 600000); // 10 minutes
     
-    const demoData = {
-        name: 'Hyderabad, IN',
-        main: {
-            temp: 28,
-            humidity: 65
-        },
-        weather: [{
-            description: 'partly cloudy',
-            id: 801
-        }],
-        wind: {
-            speed: 12
-        },
-        visibility: 10000
-    };
-    
-    document.getElementById('weather-location').textContent = demoData.name;
-    document.getElementById('weather-temp').textContent = Math.round(demoData.main.temp);
-    document.getElementById('weather-description').textContent = demoData.weather[0].description;
-    document.getElementById('weather-humidity').textContent = demoData.main.humidity;
-    document.getElementById('weather-wind').textContent = Math.round(demoData.wind.speed * 3.6);
-    document.getElementById('weather-visibility').textContent = Math.round(demoData.visibility / 1000);
-    
-    const weatherIcon = document.getElementById('weather-icon');
-    weatherIcon.className = 'fas fa-cloud-sun';
+    // Also update when location changes
+    if ('geolocation' in navigator) {
+        navigator.geolocation.watchPosition(
+            (position) => {
+                const newLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+                
+                // Check if location has changed significantly (more than 1km)
+                if (hasLocationChanged(newLocation)) {
+                    currentLocation = newLocation;
+                    if (weatherContainer.classList.contains('active')) {
+                        loadWeatherData();
+                    }
+                }
+            },
+            (error) => {
+                console.log('Location watch error:', error);
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 10000,
+                maximumAge: 300000 // 5 minutes
+            }
+        );
+    }
 }
+
+function hasLocationChanged(newLocation) {
+    if (!currentLocation) {
+        currentLocation = newLocation;
+        return true;
+    }
+    
+    // Calculate distance between old and new location
+    const distance = calculateDistance(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        newLocation.latitude,
+        newLocation.longitude
+    );
+    
+    // Return true if distance is more than 1km
+    return distance > 1;
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function stopWeatherUpdates() {
+    if (weatherUpdateInterval) {
+        clearInterval(weatherUpdateInterval);
+        weatherUpdateInterval = null;
+    }
+}
+
+
 
 // Utility functions
 function debounce(func, wait) {
@@ -739,10 +1652,21 @@ if ('serviceWorker' in navigator) {
         const swPath = window.location.hostname === 'localhost' ? './src/assets/service-worker.js' : '/techgig-hackathon/src/assets/service-worker.js';
         navigator.serviceWorker.register(swPath)
             .then(function(registration) {
-                console.log('SW registered: ', registration);
+                console.log('Service Worker registered successfully:', registration.scope);
+                
+                // Check for updates
+                registration.addEventListener('updatefound', function() {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker available
+                            console.log('New service worker available');
+                        }
+                    });
+                });
             })
             .catch(function(registrationError) {
-                console.log('SW registration failed: ', registrationError);
+                console.log('Service Worker registration failed:', registrationError);
             });
     });
 } 
