@@ -4,12 +4,17 @@ const urlsToCache = [
   '/',
   '/index.html',
   './index.html',
+  '/techgig-hackathon/',
+  '/techgig-hackathon/index.html',
   '/src/css/main.css',
   './src/css/main.css',
+  '/techgig-hackathon/src/css/main.css',
   '/src/js/app.js',
   './src/js/app.js',
+  '/techgig-hackathon/src/js/app.js',
   '/src/assets/service-worker.js',
   './src/assets/service-worker.js',
+  '/techgig-hackathon/src/assets/service-worker.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];

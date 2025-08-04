@@ -1,20 +1,42 @@
-As an AI-first developer, use any AI software development tool, AI prompting and AI prompting techniques, develop a one page mobile-friendly web application that detect how a user is holding their mobile device and displays the following features:
+# 📱 Smart Orientation App – Requirements
 
-Portrait Mode (Upright Orientation) – Alarm Clock
-Landscape Mode (Right-Side Up Orientation) – Stopwatch
-Portrait Mode (Upside Down Orientation) – Timer
-Landscape Mode (Right-Side Up Orientation) – Weather of the Day.
-Display the weather of the day using a weather api (free tier).
+As an **AI-first developer**, leverage AI software development tools and prompting techniques to build a **one-page, mobile-friendly web application** that detects how a user is holding their mobile device and displays the following features based on orientation:
 
-Key Requirements:
+## 📐 Orientation-to-Feature Mapping
 
-Mobile-first design (responsive, touch-friendly).
-Seamless orientation transitions.
-Must run entirely in the browser (no native apps)
-Should be compatible on Android and iOS devices
+- **Portrait Mode (Upright):** Alarm Clock
+- **Landscape Mode (Right-Side Up):** Stopwatch
+- **Portrait Mode (Upside Down):** Timer
+- **Landscape Mode (Right-Side Up):** Weather of the Day  
+  _(Display weather using a free-tier weather API)_
 
-Functionality – Do all controllers work as expected when device orientation changes?
-User Experience – Is the interface intuitive, responsive, and visually appealing?
-Prompting - How efficiently and effectively AI is used in the development process. How prompting is done to development? Which prompting techniques are used?
-Technical Implementation – Is the code clean, efficient, and well-documented?
-Wow! Factor – Does the project go beyond expectations?
+---
+
+## 🗝️ Key Requirements
+
+- **Mobile-first design:** Responsive and touch-friendly interface
+- **Seamless orientation transitions:** Instantly switch features as device orientation changes
+- **Browser-based:** Must run entirely in the browser (no native apps)
+- **Cross-platform:** Compatible with both Android and iOS devices
+
+---
+
+## 📝 Evaluation Criteria
+
+- **Functionality:**  
+  Do all controllers and features work as expected when device orientation changes?
+
+- **User Experience:**  
+  Is the interface intuitive, responsive, and visually appealing?
+
+- **AI Prompting:**  
+  How efficiently and effectively is AI used in the development process?  
+  How is prompting performed? Which prompting techniques are utilized?
+
+- **Technical Implementation:**  
+  Is the code clean, efficient, and well-documented?
+
+- **Wow! Factor:**  
+  Does the project go beyond expectations?
+
+---
