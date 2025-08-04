@@ -151,6 +151,22 @@ body::before {
     animation: fadeInUp 0.5s ease;
 }
 
+/* Landscape mode: Show both stopwatch and weather side by side */
+@media (orientation: landscape) {
+    .feature-container.active {
+        width: 50%;
+        height: 100vh;
+    }
+    
+    #stopwatch.active {
+        left: 0;
+    }
+    
+    #weather.active {
+        left: 50%;
+    }
+}
+
 .feature-header {
     text-align: center;
     margin-bottom: 30px;
@@ -179,6 +195,22 @@ body::before {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Adjust feature header for landscape mode */
+@media (orientation: landscape) {
+    .feature-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .feature-header i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .feature-header {
+        margin-bottom: 20px;
+    }
+}
+
 .content-card {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(25px);
@@ -193,6 +225,14 @@ body::before {
     width: 100%;
     margin: 0;
     transition: all 0.3s ease;
+}
+
+/* Adjust content card for landscape mode */
+@media (orientation: landscape) {
+    .content-card {
+        max-width: 90%;
+        padding: 25px 20px;
+    }
 }
 
 .content-card:hover {

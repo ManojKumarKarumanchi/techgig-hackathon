@@ -39,6 +39,30 @@ function initializeApp() {
         return;
     }
 
+    // Initialize all features first
+    initializeAlarmClock();
+    initializeStopwatch();
+    initializeTimer();
+    initializeWeather();
+    
+    // Setup orientation detection
+    setupOrientationDetection();
+    
+    // Hide loading screen after initialization
+    setTimeout(() => {
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+            
+            // Ensure at least one feature is shown
+            if (!document.querySelector('.feature-container.active')) {
+                updateOrientation('portrait-upright');
+            }
+        }, 500);
+    }, 2000);
+}
+
+function setupOrientationDetection() {
     // Request device orientation permission
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
@@ -55,25 +79,32 @@ function initializeApp() {
     } else {
         setupOrientationDetection();
     }
-
-    // Initialize all features
-    initializeAlarmClock();
-    initializeStopwatch();
-    initializeTimer();
-    initializeWeather();
-    
-    // Hide loading screen after initialization
-    setTimeout(() => {
-        loadingScreen.style.opacity = '0';
-        setTimeout(() => {
-            loadingScreen.style.display = 'none';
-        }, 500);
-    }, 2000);
 }
 
-// Device detection
+// Device detection - Improved for better mobile detection
 function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // Check user agent
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS|FxiOS/i;
+    
+    // Check if it's a mobile device
+    if (mobileRegex.test(userAgent)) {
+        return true;
+    }
+    
+    // Additional checks for mobile characteristics
+    const isMobile = {
+        Android: () => navigator.userAgent.match(/Android/i),
+        BlackBerry: () => navigator.userAgent.match(/BlackBerry/i),
+        iOS: () => navigator.userAgent.match(/iPhone|iPad|iPod/i),
+        Opera: () => navigator.userAgent.match(/Opera Mini/i),
+        Windows: () => navigator.userAgent.match(/IEMobile/i),
+        any: function() {
+            return (this.Android() || this.BlackBerry() || this.iOS() || this.Opera() || this.Windows());
+        }
+    };
+    
+    return isMobile.any();
 }
 
 function showDesktopFallback() {
@@ -129,9 +160,21 @@ function handleOrientationChange() {
 }
 
 function detectInitialOrientation() {
+    // Try multiple methods to detect initial orientation
     if (window.orientation !== undefined) {
         handleOrientationChange();
+    } else if (window.screen && window.screen.orientation) {
+        // Use Screen Orientation API if available
+        const orientation = window.screen.orientation.type;
+        if (orientation.includes('portrait')) {
+            updateOrientation('portrait-upright');
+        } else if (orientation.includes('landscape')) {
+            updateOrientation('landscape');
+        } else {
+            updateOrientation('portrait-upright');
+        }
     } else {
+        // Fallback to portrait-upright
         updateOrientation('portrait-upright');
     }
 }
@@ -147,7 +190,7 @@ function updateOrientation(orientation) {
     const orientationLabels = {
         'portrait-upright': 'Portrait (Alarm)',
         'portrait-upside-down': 'Upside Down (Timer)',
-        'landscape': 'Landscape (Stopwatch/Weather)'
+        'landscape': 'Landscape (Stopwatch + Weather)'
     };
     
     orientationText.textContent = orientationLabels[orientation] || 'Detecting...';
@@ -166,15 +209,11 @@ function updateOrientation(orientation) {
             timerContainer.classList.add('active');
             break;
         case 'landscape':
-            // Alternate between stopwatch and weather in landscape
-            const currentTime = new Date().getTime();
-            if (currentTime % 10000 < 5000) {
-                stopwatchContainer.classList.add('active');
-            } else {
-                weatherContainer.classList.add('active');
-                loadWeatherData();
-            }
+            stopwatchContainer.classList.add('active');
+            weatherContainer.classList.add('active');
+            loadWeatherData();
             break;
+
     }
 }
 
