@@ -1,0 +1,22 @@
+As an AI-first developer, use any AI software development tool, AI prompting and AI prompting techniques, develop a one page mobile-friendly web application that detect how a user is holding their mobile device and displays the following features:
+
+Portrait Mode (Upright Orientation) – Alarm Clock
+Landscape Mode (Right-Side Up Orientation) – Stopwatch
+Portrait Mode (Upside Down Orientation) – Timer
+Landscape Mode (Right-Side Up Orientation) – Weather of the Day.
+Display the weather of the day using a weather api (free tier).
+
+Key Requirements:
+
+Mobile-first design (responsive, touch-friendly).
+Seamless orientation transitions.
+Must run entirely in the browser (no native apps)
+Should be compatible on Android and iOS devices
+
+Functionality – Do all controllers work as expected when device orientation changes?
+User Experience – Is the interface intuitive, responsive, and visually appealing?
+Prompting - How efficiently and effectively AI is used in the development process. How prompting is done to development? Which prompting techniques are used?
+Technical Implementation – Is the code clean, efficient, and well-documented?
+Wow! Factor – Does the project go beyond expectations?
+
+are these fully met how can i live test, host in vercel so that it will be easy i think or github pages which is easy

@@ -1,0 +1,26 @@
+{
+  "name": "smart-orientation-app",
+  "version": "1.0.0",
+  "description": "Mobile web app that switches features based on device orientation - Hackathon submission",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000",
+    "serve": "python -m http.server 8000"
+  },
+  "keywords": [
+    "mobile",
+    "orientation",
+    "alarm-clock",
+    "stopwatch",
+    "timer",
+    "weather",
+    "hackathon"
+  ],
+  "author": "Manoj Kumar Karumanchi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ManojKumarKarumanchi/techgig-hackathon.git"
+  }
+} 
