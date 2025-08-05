@@ -378,9 +378,11 @@ function updateOrientation(orientation) {
     switch (orientation) {
         case 'portrait-upright':
             alarmContainer.classList.add('active');
+            updateLandscapeIndicator(false);
             break;
         case 'portrait-upside-down':
             timerContainer.classList.add('active');
+            updateLandscapeIndicator(false);
             break;
         case 'landscape':
             // Toggle between Stopwatch and Weather in landscape mode
@@ -392,6 +394,7 @@ function updateOrientation(orientation) {
                 stopwatchContainer.classList.remove('active');
                 loadWeatherData();
             }
+            updateLandscapeIndicator(true);
             break;
     }
 }
@@ -1330,11 +1333,21 @@ function displayWeatherData(data, forecastData = null) {
         sunInfo.innerHTML = `
             <div class="sun-item">
                 <i class="fas fa-sunrise"></i>
-                <span>Sunrise: ${sunrise.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>Sunrise: ${sunrise.toLocaleTimeString('en-IN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: timeFormat === '12',
+                    timeZone: 'Asia/Kolkata'
+                })}</span>
             </div>
             <div class="sun-item">
                 <i class="fas fa-sunset"></i>
-                <span>Sunset: ${sunset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>Sunset: ${sunset.toLocaleTimeString('en-IN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: timeFormat === '12',
+                    timeZone: 'Asia/Kolkata'
+                })}</span>
             </div>
         `;
     }
@@ -1356,15 +1369,16 @@ function displayWeatherData(data, forecastData = null) {
         const timezone = data.timezone || 0;
         const localTime = new Date(Date.now() + (timezone * 1000));
         
-        // Get IST time
-        const istTime = new Date(Date.now() + (5.5 * 60 * 60 * 1000));
+        // Get IST time using the same method as alarm clock
+        const now = new Date();
+        const istTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
         
         // Format last update time
         const lastUpdateText = lastWeatherUpdate ? 
             lastWeatherUpdate.toLocaleTimeString('en-IN', {
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: true
+                hour12: timeFormat === '12'
             }) : 'Just now';
         
         additionalInfo.innerHTML = `
@@ -1378,7 +1392,7 @@ function displayWeatherData(data, forecastData = null) {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
-                    hour12: true
+                    hour12: timeFormat === '12'
                 })}</span>
             </div>
             <div class="info-item">
@@ -1387,7 +1401,8 @@ function displayWeatherData(data, forecastData = null) {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
-                    hour12: true
+                    hour12: timeFormat === '12',
+                    timeZone: 'Asia/Kolkata'
                 })}</span>
             </div>
             <div class="info-item">
@@ -1443,7 +1458,12 @@ function displayForecast(forecastData) {
         <div class="forecast-list">
             ${dailyAverages.map(day => `
                 <div class="forecast-day">
-                    <div class="forecast-date">${day.day.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                    <div class="forecast-date">${day.day.toLocaleDateString('en-IN', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric',
+                    timeZone: 'Asia/Kolkata'
+                })}</div>
                     <div class="forecast-icon">
                         <i class="${getWeatherIconClass(day.weather.id)}"></i>
                     </div>
@@ -1600,8 +1620,42 @@ document.addEventListener('touchend', function(e) {
     }
 });
 
-// Landscape feature toggle - tap to switch between Stopwatch and Weather
+// Landscape feature toggle - multiple methods to switch between Stopwatch and Weather
 let lastTapTime = 0;
+let startX = 0;
+let startY = 0;
+let isSwiping = false;
+
+// Touch start for swipe detection
+document.addEventListener('touchstart', function(e) {
+    if (currentOrientation === 'landscape' && 
+        !e.target.classList.contains('btn') && 
+        !e.target.classList.contains('preset-btn') &&
+        !e.target.closest('.btn') &&
+        !e.target.closest('.preset-btn')) {
+        
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isSwiping = false;
+    }
+});
+
+// Touch move for swipe detection
+document.addEventListener('touchmove', function(e) {
+    if (currentOrientation === 'landscape' && startX !== 0) {
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const deltaX = Math.abs(currentX - startX);
+        const deltaY = Math.abs(currentY - startY);
+        
+        // If horizontal movement is greater than vertical, it's a swipe
+        if (deltaX > deltaY && deltaX > 10) {
+            isSwiping = true;
+        }
+    }
+});
+
+// Touch end for both tap and swipe detection
 document.addEventListener('touchend', function(e) {
     // Only trigger if we're in landscape mode and not clicking on buttons
     if (currentOrientation === 'landscape' && 
@@ -1613,15 +1667,102 @@ document.addEventListener('touchend', function(e) {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTapTime;
         
-        // Double tap to toggle landscape features
-        if (tapLength < 500 && tapLength > 0) {
-            landscapeFeatureToggle = landscapeFeatureToggle === 'stopwatch' ? 'weather' : 'stopwatch';
-            updateOrientation('landscape'); // Refresh the display
+        // Method 1: Double tap to toggle landscape features
+        if (tapLength < 500 && tapLength > 0 && !isSwiping) {
+            toggleLandscapeFeature();
             e.preventDefault();
         }
+        
+        // Method 2: Swipe to toggle landscape features
+        if (isSwiping && startX !== 0) {
+            const endX = e.changedTouches[0].clientX;
+            const swipeDistance = endX - startX;
+            
+            if (Math.abs(swipeDistance) > 50) { // Minimum swipe distance
+                toggleLandscapeFeature();
+                e.preventDefault();
+            }
+        }
+        
         lastTapTime = currentTime;
+        startX = 0;
+        startY = 0;
+        isSwiping = false;
     }
 });
+
+// Function to toggle landscape feature
+function toggleLandscapeFeature() {
+    landscapeFeatureToggle = landscapeFeatureToggle === 'stopwatch' ? 'weather' : 'stopwatch';
+    updateOrientation('landscape'); // Refresh the display
+    
+    // Show visual feedback
+    showLandscapeToggleFeedback();
+    
+    // Haptic feedback if available
+    if (navigator.vibrate) {
+        navigator.vibrate(100);
+    }
+}
+
+// Visual feedback for landscape toggle
+function showLandscapeToggleFeedback() {
+    // Create or update toggle indicator
+    let toggleIndicator = document.getElementById('landscape-toggle-indicator');
+    if (!toggleIndicator) {
+        toggleIndicator = document.createElement('div');
+        toggleIndicator.id = 'landscape-toggle-indicator';
+        toggleIndicator.className = 'landscape-toggle-indicator';
+        document.body.appendChild(toggleIndicator);
+    }
+    
+    const featureName = landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather';
+    const icon = landscapeFeatureToggle === 'stopwatch' ? '⏱️' : '🌤️';
+    
+    toggleIndicator.innerHTML = `
+        <div class="toggle-feedback">
+            <span class="toggle-icon">${icon}</span>
+            <span class="toggle-text">${featureName}</span>
+        </div>
+    `;
+    
+    toggleIndicator.classList.add('show');
+    
+    // Hide after 2 seconds
+    setTimeout(() => {
+        toggleIndicator.classList.remove('show');
+    }, 2000);
+}
+
+// Update persistent landscape indicator
+function updateLandscapeIndicator(show) {
+    let persistentIndicator = document.getElementById('landscape-persistent-indicator');
+    
+    if (show) {
+        if (!persistentIndicator) {
+            persistentIndicator = document.createElement('div');
+            persistentIndicator.id = 'landscape-persistent-indicator';
+            persistentIndicator.className = 'landscape-persistent-indicator';
+            document.body.appendChild(persistentIndicator);
+        }
+        
+        const featureName = landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather';
+        const icon = landscapeFeatureToggle === 'stopwatch' ? '⏱️' : '🌤️';
+        
+        persistentIndicator.innerHTML = `
+            <div class="persistent-indicator">
+                <span class="persistent-icon">${icon}</span>
+                <span class="persistent-text">${featureName}</span>
+            </div>
+        `;
+        
+        persistentIndicator.classList.add('visible');
+    } else {
+        if (persistentIndicator) {
+            persistentIndicator.classList.remove('visible');
+        }
+    }
+}
 
 // Prevent zoom on double tap
 let lastTouchEnd = 0;
@@ -1669,4 +1810,4 @@ if ('serviceWorker' in navigator) {
                 console.log('Service Worker registration failed:', registrationError);
             });
     });
-} 
+}

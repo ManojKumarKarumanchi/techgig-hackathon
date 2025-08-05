@@ -1,8 +1,8 @@
-# 📱 Smart Orientation App – Requirements
+# Smart Orientation App – Requirements
 
-As an **AI-first developer**, leverage AI software development tools and prompting techniques to build a **one-page, mobile-friendly web application** that detects how a user is holding their mobile device and displays the following features based on orientation:
+Build a one-page, mobile-friendly web application that detects how a user is holding their mobile device and displays the following features based on orientation:
 
-## 📐 Orientation-to-Feature Mapping
+## Orientation-to-Feature Mapping
 
 - **Portrait Mode (Upright):** Alarm Clock
 - **Landscape Mode (Right-Side Up):** Stopwatch
@@ -12,7 +12,7 @@ As an **AI-first developer**, leverage AI software development tools and prompti
 
 ---
 
-## 🗝️ Key Requirements
+## Key Requirements
 
 - **Mobile-first design:** Responsive and touch-friendly interface
 - **Seamless orientation transitions:** Instantly switch features as device orientation changes
@@ -21,7 +21,7 @@ As an **AI-first developer**, leverage AI software development tools and prompti
 
 ---
 
-## 📝 Evaluation Criteria
+## Evaluation Criteria
 
 - **Functionality:**  
   Do all controllers and features work as expected when device orientation changes?

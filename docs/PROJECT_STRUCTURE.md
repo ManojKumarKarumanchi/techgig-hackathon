@@ -1,22 +1,22 @@
-# 📁 Project Structure
+# Project Structure
 
 ```
 techgig-hackathon/
-├── 📄 index.html                 # Main application entry point
-├── 📁 src/                       # Source code directory
-│   ├── 📁 js/                    # JavaScript files
-│   │   └── 📄 app.js            # Main application logic
-│   ├── 📁 css/                   # Stylesheet files
-│   │   └── 📄 main.css          # Main stylesheet
-│   └── 📁 assets/                # Static assets
-│       └── 📄 service-worker.js  # Service worker for PWA
-├── 📁 docs/                      # Documentation
-│   ├── 📄 requirements.md        # Original project requirements
-│   └── 📄 PROJECT_STRUCTURE.md   # This file
-├── 📄 README.md                  # Project documentation
-├── 📄 package.json               # Package configuration
-├── 📄 LICENSE                    # MIT license
-└── 📄 .gitignore                 # Git ignore rules
+├── index.html                 # Main application entry point
+├── src/                       # Source code directory
+│   ├── js/                    # JavaScript files
+│   │   └── app.js            # Main application logic
+│   ├── css/                   # Stylesheet files
+│   │   └── main.css          # Main stylesheet
+│   └── assets/                # Static assets
+│       └── service-worker.js  # Service worker for PWA
+├── docs/                      # Documentation
+│   ├── requirements.md        # Original project requirements
+│   └── PROJECT_STRUCTURE.md   # This file
+├── README.md                  # Project documentation
+├── package.json               # Project configuration
+├── LICENSE                    # MIT license
+└── .gitignore                 # Git ignore rules
 ```
 
 ## File Descriptions
@@ -53,7 +53,7 @@ techgig-hackathon/
 
 ### Documentation
 
-- **`docs/requirements.md`**: Contains the original project requirements and feature specifications from the hackathon problem statement.
+- **`docs/requirements.md`**: Contains the original project requirements and feature specifications.
 
 - **`docs/PROJECT_STRUCTURE.md`**: This file, documenting the project structure and file organization.
 
@@ -101,12 +101,10 @@ techgig-hackathon/
 ## Development Workflow
 
 1. **Local Development**: Use a local server to test the application
-2. **GitHub Pages Deployment**: Automatic deployment from the `cursor-test` branch
+2. **GitHub Pages Deployment**: Automatic deployment from the main branch
 3. **Version Control**: Git-based workflow with proper branching strategy
 
 ## Deployment
 
 The application is deployed to GitHub Pages at:
-`https://manojkumarkarumanchi.github.io/techgig-hackathon/`
-
-The deployment branch is `cursor-test` and updates are automatically reflected when changes are pushed to this branch. 
+`https://manojkumarkarumanchi.github.io/techgig-hackathon/` 

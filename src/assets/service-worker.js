@@ -1,13 +1,13 @@
-// Service Worker for Smart Orientation App - Production Version
-const CACHE_NAME = 'smart-orientation-app-v1.0';
-const STATIC_CACHE = 'static-v1.0';
-const DYNAMIC_CACHE = 'dynamic-v1.0';
+// Service Worker for Smart Orientation App
+const CACHE_NAME = 'smart-orientation-app';
+const STATIC_CACHE = 'static';
+const DYNAMIC_CACHE = 'dynamic';
 
 const STATIC_ASSETS = [
     '/',
     '/index.html',
-    '/src/css/main.css?v=1.8',
-    '/src/js/app.js?v=1.7',
+    '/src/css/main.css',
+    '/src/js/app.js',
     '/src/assets/service-worker.js',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
