@@ -1,0 +1,43 @@
+{
+  "name": "smart-orientation-app",
+  "version": "1.0.0",
+  "description": "A mobile web application that switches features based on device orientation - Alarm Clock, Stopwatch, Timer, and Weather",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000",
+    "build": "echo 'No build step required - static files only'",
+    "deploy": "echo 'Deploy to GitHub Pages by pushing to main branch'"
+  },
+  "keywords": [
+    "mobile",
+    "orientation",
+    "alarm-clock",
+    "stopwatch",
+    "timer",
+    "weather",
+    "pwa",
+    "progressive-web-app",
+    "device-orientation",
+    "responsive",
+    "touch-friendly"
+  ],
+  "author": "AI-First Developer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/manojkumarkarumanchi/techgig-hackathon.git"
+  },
+  "homepage": "https://manojkumarkarumanchi.github.io/techgig-hackathon/",
+  "bugs": {
+    "url": "https://github.com/manojkumarkarumanchi/techgig-hackathon/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+} 
