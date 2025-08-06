@@ -1,9 +1,12 @@
 // Smart Orientation App - Core Implementation
-// Focused on the hackathon problem statement
+// Orientation mapping:
+// Portrait Upright: Alarm Clock
+// Portrait Upside Down: Timer
+// Landscape-Left (right side up): Stopwatch
+// Landscape-Right (left side up): Weather
 
 // Global variables
 let currentOrientation = 'unknown';
-let landscapeFeatureToggle = 'stopwatch';
 let currentTheme = 'light';
 let timeFormat = '24'; // 24 or 12 hour format
 let isFullscreen = false;
@@ -303,18 +306,24 @@ function handleDeviceOrientation(event) {
     const gamma = event.gamma; // Tilt left-to-right (-90 to 90)
     
     let orientation = '';
-    
-    // Core orientation detection logic
+    // Portrait upright: beta ~0, gamma ~0
     if (Math.abs(beta) < 45 && Math.abs(gamma) < 45) {
         orientation = 'portrait-upright'; // Alarm Clock
-    } else if (Math.abs(beta) > 135 && Math.abs(gamma) < 45) {
+    } 
+    // Portrait upside down: beta ~180 or -180, gamma ~0
+    else if ((beta > 135 || beta < -135) && Math.abs(gamma) < 45) {
         orientation = 'portrait-upside-down'; // Timer
-    } else if (Math.abs(gamma) > 45) {
-        orientation = 'landscape'; // Stopwatch or Weather
+    } 
+    // Landscape left (right side up): gamma > 45
+    else if (gamma > 45) {
+        orientation = 'landscape-left'; // Stopwatch
+    } 
+    // Landscape right (left side up): gamma < -45
+    else if (gamma < -45) {
+        orientation = 'landscape-right'; // Weather
     } else {
         orientation = 'unknown';
     }
-    
     updateOrientation(orientation);
 }
 
@@ -322,13 +331,15 @@ function handleOrientationChange() {
     setTimeout(() => {
         const orientation = window.orientation;
         let orientationType = '';
-        
-        if (orientation === 0 || orientation === 180) {
-            orientationType = orientation === 0 ? 'portrait-upright' : 'portrait-upside-down';
-        } else if (orientation === 90 || orientation === -90) {
-            orientationType = 'landscape';
+        if (orientation === 0) {
+            orientationType = 'portrait-upright';
+        } else if (orientation === 180) {
+            orientationType = 'portrait-upside-down';
+        } else if (orientation === 90) {
+            orientationType = 'landscape-left'; // right side up
+        } else if (orientation === -90) {
+            orientationType = 'landscape-right'; // left side up
         }
-        
         updateOrientation(orientationType);
     }, 100);
 }
@@ -343,7 +354,15 @@ function detectInitialOrientation() {
         if (orientation.includes('portrait')) {
             updateOrientation('portrait-upright');
         } else if (orientation.includes('landscape')) {
-            updateOrientation('landscape');
+            // Try to guess left/right from angle if available
+            const angle = window.screen.orientation.angle;
+            if (angle === 90) {
+                updateOrientation('landscape-left');
+            } else if (angle === 270 || angle === -90) {
+                updateOrientation('landscape-right');
+            } else {
+                updateOrientation('landscape-left');
+            }
         } else {
             updateOrientation('portrait-upright');
         }
@@ -357,23 +376,19 @@ function updateOrientation(orientation) {
     if (orientation === currentOrientation || orientation === 'unknown') {
         return;
     }
-    
     currentOrientation = orientation;
-    
     // Update orientation indicator
     const orientationLabels = {
         'portrait-upright': 'Portrait (Alarm)',
         'portrait-upside-down': 'Upside Down (Timer)',
-        'landscape': `Landscape (${landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather'})`
+        'landscape-left': 'Landscape Left (Stopwatch)',
+        'landscape-right': 'Landscape Right (Weather)'
     };
-    
     orientationText.textContent = orientationLabels[orientation] || 'Detecting...';
-    
     // Hide all feature containers
     document.querySelectorAll('.feature-container').forEach(container => {
         container.classList.remove('active');
     });
-    
     // Show appropriate feature based on orientation - CORE LOGIC
     switch (orientation) {
         case 'portrait-upright':
@@ -384,16 +399,15 @@ function updateOrientation(orientation) {
             timerContainer.classList.add('active');
             updateLandscapeIndicator(false);
             break;
-        case 'landscape':
-            // Toggle between Stopwatch and Weather in landscape mode
-            if (landscapeFeatureToggle === 'stopwatch') {
-                stopwatchContainer.classList.add('active');
-                weatherContainer.classList.remove('active');
-            } else {
-                weatherContainer.classList.add('active');
-                stopwatchContainer.classList.remove('active');
-                loadWeatherData();
-            }
+        case 'landscape-left':
+            stopwatchContainer.classList.add('active');
+            weatherContainer.classList.remove('active');
+            updateLandscapeIndicator(true);
+            break;
+        case 'landscape-right':
+            weatherContainer.classList.add('active');
+            stopwatchContainer.classList.remove('active');
+            loadWeatherData();
             updateLandscapeIndicator(true);
             break;
     }
@@ -1619,150 +1633,6 @@ document.addEventListener('touchend', function(e) {
         e.target.style.transform = '';
     }
 });
-
-// Landscape feature toggle - multiple methods to switch between Stopwatch and Weather
-let lastTapTime = 0;
-let startX = 0;
-let startY = 0;
-let isSwiping = false;
-
-// Touch start for swipe detection
-document.addEventListener('touchstart', function(e) {
-    if (currentOrientation === 'landscape' && 
-        !e.target.classList.contains('btn') && 
-        !e.target.classList.contains('preset-btn') &&
-        !e.target.closest('.btn') &&
-        !e.target.closest('.preset-btn')) {
-        
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isSwiping = false;
-    }
-});
-
-// Touch move for swipe detection
-document.addEventListener('touchmove', function(e) {
-    if (currentOrientation === 'landscape' && startX !== 0) {
-        const currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
-        const deltaX = Math.abs(currentX - startX);
-        const deltaY = Math.abs(currentY - startY);
-        
-        // If horizontal movement is greater than vertical, it's a swipe
-        if (deltaX > deltaY && deltaX > 10) {
-            isSwiping = true;
-        }
-    }
-});
-
-// Touch end for both tap and swipe detection
-document.addEventListener('touchend', function(e) {
-    // Only trigger if we're in landscape mode and not clicking on buttons
-    if (currentOrientation === 'landscape' && 
-        !e.target.classList.contains('btn') && 
-        !e.target.classList.contains('preset-btn') &&
-        !e.target.closest('.btn') &&
-        !e.target.closest('.preset-btn')) {
-        
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTapTime;
-        
-        // Method 1: Double tap to toggle landscape features
-        if (tapLength < 500 && tapLength > 0 && !isSwiping) {
-            toggleLandscapeFeature();
-            e.preventDefault();
-        }
-        
-        // Method 2: Swipe to toggle landscape features
-        if (isSwiping && startX !== 0) {
-            const endX = e.changedTouches[0].clientX;
-            const swipeDistance = endX - startX;
-            
-            if (Math.abs(swipeDistance) > 50) { // Minimum swipe distance
-                toggleLandscapeFeature();
-                e.preventDefault();
-            }
-        }
-        
-        lastTapTime = currentTime;
-        startX = 0;
-        startY = 0;
-        isSwiping = false;
-    }
-});
-
-// Function to toggle landscape feature
-function toggleLandscapeFeature() {
-    landscapeFeatureToggle = landscapeFeatureToggle === 'stopwatch' ? 'weather' : 'stopwatch';
-    updateOrientation('landscape'); // Refresh the display
-    
-    // Show visual feedback
-    showLandscapeToggleFeedback();
-    
-    // Haptic feedback if available
-    if (navigator.vibrate) {
-        navigator.vibrate(100);
-    }
-}
-
-// Visual feedback for landscape toggle
-function showLandscapeToggleFeedback() {
-    // Create or update toggle indicator
-    let toggleIndicator = document.getElementById('landscape-toggle-indicator');
-    if (!toggleIndicator) {
-        toggleIndicator = document.createElement('div');
-        toggleIndicator.id = 'landscape-toggle-indicator';
-        toggleIndicator.className = 'landscape-toggle-indicator';
-        document.body.appendChild(toggleIndicator);
-    }
-    
-    const featureName = landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather';
-    const icon = landscapeFeatureToggle === 'stopwatch' ? '⏱️' : '🌤️';
-    
-    toggleIndicator.innerHTML = `
-        <div class="toggle-feedback">
-            <span class="toggle-icon">${icon}</span>
-            <span class="toggle-text">${featureName}</span>
-        </div>
-    `;
-    
-    toggleIndicator.classList.add('show');
-    
-    // Hide after 2 seconds
-    setTimeout(() => {
-        toggleIndicator.classList.remove('show');
-    }, 2000);
-}
-
-// Update persistent landscape indicator
-function updateLandscapeIndicator(show) {
-    let persistentIndicator = document.getElementById('landscape-persistent-indicator');
-    
-    if (show) {
-        if (!persistentIndicator) {
-            persistentIndicator = document.createElement('div');
-            persistentIndicator.id = 'landscape-persistent-indicator';
-            persistentIndicator.className = 'landscape-persistent-indicator';
-            document.body.appendChild(persistentIndicator);
-        }
-        
-        const featureName = landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather';
-        const icon = landscapeFeatureToggle === 'stopwatch' ? '⏱️' : '🌤️';
-        
-        persistentIndicator.innerHTML = `
-            <div class="persistent-indicator">
-                <span class="persistent-icon">${icon}</span>
-                <span class="persistent-text">${featureName}</span>
-            </div>
-        `;
-        
-        persistentIndicator.classList.add('visible');
-    } else {
-        if (persistentIndicator) {
-            persistentIndicator.classList.remove('visible');
-        }
-    }
-}
 
 // Prevent zoom on double tap
 let lastTouchEnd = 0;
