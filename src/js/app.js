@@ -42,49 +42,111 @@ let loadingScreen;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
     initializeApp();
 });
 
-function initializeApp() {
-    // Get DOM elements
-    alarmContainer = document.getElementById('alarm');
-    stopwatchContainer = document.getElementById('stopwatch');
-    timerContainer = document.getElementById('timer');
-    weatherContainer = document.getElementById('weather');
-    desktopFallback = document.getElementById('desktop-fallback');
-    orientationIndicator = document.getElementById('orientation-indicator');
-    orientationText = document.getElementById('orientation-text');
-    loadingScreen = document.getElementById('loading');
+// Fallback initialization in case DOMContentLoaded doesn't fire
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already loaded
+    console.log('DOM already loaded, initializing immediately');
+    initializeApp();
+}
 
-    // Debug: Log device detection
-    console.log('User agent:', navigator.userAgent);
-    console.log('isMobileDevice():', isMobileDevice());
-
-    // Patch: Always proceed as mobile for debugging
-    // if (!isMobileDevice()) {
-    //     showDesktopFallback();
-    //     return;
-    // }
-    // Hide desktop fallback for mobile devices
-    desktopFallback.style.display = 'none';
-
-    // Initialize all features
-    initializeAlarmClock();
-    initializeStopwatch();
-    initializeTimer();
-    initializeWeather();
-    initializeTheme();
-
-    // Setup orientation detection
-    setupOrientationDetection();
-
-    // Hide loading screen (always hide after 1s)
-    setTimeout(() => {
+// Emergency fallback: Hide loading screen after 3 seconds regardless
+setTimeout(() => {
+    const loadingScreen = document.getElementById('loading');
+    if (loadingScreen && loadingScreen.style.display !== 'none') {
+        console.log('Emergency fallback: Hiding loading screen');
         loadingScreen.style.opacity = '0';
         setTimeout(() => {
             loadingScreen.style.display = 'none';
+        }, 300);
+    }
+}, 3000);
+
+function initializeApp() {
+    try {
+        console.log('Initializing app...');
+        
+        // Get DOM elements
+        alarmContainer = document.getElementById('alarm');
+        stopwatchContainer = document.getElementById('stopwatch');
+        timerContainer = document.getElementById('timer');
+        weatherContainer = document.getElementById('weather');
+        desktopFallback = document.getElementById('desktop-fallback');
+        orientationIndicator = document.getElementById('orientation-indicator');
+        orientationText = document.getElementById('orientation-text');
+        loadingScreen = document.getElementById('loading');
+
+        // Debug: Log device detection
+        console.log('User agent:', navigator.userAgent);
+        console.log('isMobileDevice():', isMobileDevice());
+
+        // Hide loading screen immediately for debugging
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 300);
+        }
+
+        // Show desktop fallback only for non-mobile devices
+        if (desktopFallback) {
+            if (!isMobileDevice()) {
+                desktopFallback.style.display = 'flex';
+                loadingScreen.style.display = 'none';
+                console.log('Showing desktop fallback for non-mobile device');
+                return; // Exit initialization for desktop
+            } else {
+                desktopFallback.style.display = 'none';
+                console.log('Hiding desktop fallback for mobile device');
+            }
+        }
+
+        // Initialize all features
+        console.log('Initializing features...');
+        initializeAlarmClock();
+        initializeStopwatch();
+        initializeTimer();
+        initializeWeather();
+        initializeTheme();
+
+        // Setup orientation detection
+        setupOrientationDetection();
+        
+        // Show alarm container by default immediately
+        if (alarmContainer) {
+            alarmContainer.classList.add('active');
+            console.log('Showing alarm container by default');
+        }
+        
+        // Ensure at least one feature is shown by default
+        setTimeout(() => {
+            const activeContainer = document.querySelector('.feature-container.active');
+            if (!activeContainer) {
+                console.log('No active feature container found, showing alarm by default');
+                if (alarmContainer) {
+                    alarmContainer.classList.add('active');
+                    updateOrientation('portrait-upright');
+                }
+            }
         }, 500);
-    }, 1000);
+        
+        console.log('App initialization complete');
+        
+    } catch (error) {
+        console.error('Error during app initialization:', error);
+        // Hide loading screen even if there's an error
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 300);
+        }
+    }
 }
 
 // Theme functionality
@@ -96,9 +158,8 @@ function initializeTheme() {
     if (savedTheme) {
         currentTheme = savedTheme;
     } else {
-        // Check system preference
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        currentTheme = prefersDark ? 'dark' : 'light';
+        // Default to system preference
+        currentTheme = 'system';
     }
     
     // Set time format - default to '24' if not saved
@@ -110,9 +171,30 @@ function initializeTheme() {
     }
     
     applyTheme(currentTheme);
+    addHeaderToggle();
     addThemeToggle();
     addTimeFormatToggle();
     addFullscreenToggle();
+    
+    // Set up popup close button
+    const closePopupBtn = document.getElementById('close-popup');
+    if (closePopupBtn) {
+        closePopupBtn.onclick = closeHeaderPopup;
+    }
+    
+    // Close popup when clicking outside
+    document.addEventListener('click', function(event) {
+        const popup = document.getElementById('header-popup');
+        const headerToggle = document.getElementById('header-toggle');
+        if (popup && popup.classList.contains('show') && 
+            !popup.contains(event.target) && 
+            !headerToggle.contains(event.target)) {
+            closeHeaderPopup();
+        }
+    });
+    
+    // Listen for system theme changes
+    setupSystemThemeListener();
     
     // Update current time immediately
     updateCurrentTime();
@@ -121,45 +203,113 @@ function initializeTheme() {
     setInterval(updateCurrentTime, 1000);
 }
 
+function addHeaderToggle() {
+    // Check if header toggle already exists
+    if (document.querySelector('.header-toggle-btn')) {
+        return;
+    }
+    
+    const headerToggle = document.getElementById('header-toggle');
+    if (headerToggle) {
+        headerToggle.onclick = toggleHeaderPopup;
+    }
+}
+
 function addThemeToggle() {
+    // Check if theme toggle already exists
+    if (document.querySelector('.theme-toggle')) {
+        return;
+    }
+    
+    const popupControls = document.querySelector('.popup-controls');
+    if (!popupControls) {
+        console.error('Popup controls container not found');
+        return;
+    }
+    
     const themeToggle = document.createElement('button');
-    themeToggle.className = 'theme-toggle';
-    themeToggle.innerHTML = currentTheme === 'dark' ? '☀️' : '🌙';
-    themeToggle.title = 'Toggle theme';
+    themeToggle.className = 'theme-toggle popup-control-btn';
+    themeToggle.innerHTML = getThemeIcon(currentTheme);
+    themeToggle.title = getThemeTitle(currentTheme);
     themeToggle.onclick = toggleTheme;
-    orientationIndicator.appendChild(themeToggle);
+    popupControls.appendChild(themeToggle);
 }
 
 function addTimeFormatToggle() {
+    // Check if time format toggle already exists
+    if (document.querySelector('.time-format-toggle')) {
+        return;
+    }
+    
+    const popupControls = document.querySelector('.popup-controls');
+    if (!popupControls) {
+        console.error('Popup controls container not found');
+        return;
+    }
+    
     const timeFormatToggle = document.createElement('button');
-    timeFormatToggle.className = 'time-format-toggle';
+    timeFormatToggle.className = 'time-format-toggle popup-control-btn';
     timeFormatToggle.textContent = timeFormat === '24' ? '24H' : '12H';
     timeFormatToggle.title = 'Toggle time format';
     timeFormatToggle.onclick = toggleTimeFormat;
-    orientationIndicator.appendChild(timeFormatToggle);
+    popupControls.appendChild(timeFormatToggle);
 }
 
 function addFullscreenToggle() {
+    // Check if fullscreen toggle already exists
+    if (document.querySelector('.fullscreen-toggle')) {
+        return;
+    }
+    
+    const popupControls = document.querySelector('.popup-controls');
+    if (!popupControls) {
+        console.error('Popup controls container not found');
+        return;
+    }
+    
     const fullscreenToggle = document.createElement('button');
-    fullscreenToggle.className = 'fullscreen-toggle';
+    fullscreenToggle.className = 'fullscreen-toggle popup-control-btn';
     fullscreenToggle.innerHTML = '⛶';
     fullscreenToggle.title = 'Toggle fullscreen';
     fullscreenToggle.onclick = toggleFullscreen;
-    orientationIndicator.appendChild(fullscreenToggle);
+    popupControls.appendChild(fullscreenToggle);
+}
+
+function toggleHeaderPopup() {
+    const popup = document.getElementById('header-popup');
+    if (popup) {
+        popup.classList.toggle('show');
+    }
+}
+
+function closeHeaderPopup() {
+    const popup = document.getElementById('header-popup');
+    if (popup) {
+        popup.classList.remove('show');
+    }
 }
 
 function toggleTheme() {
     // Add transition class for smooth theme switching
     document.body.classList.add('theme-transitioning');
     
-    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    // Toggle between light, dark, and system preference
+    if (currentTheme === 'light') {
+        currentTheme = 'dark';
+    } else if (currentTheme === 'dark') {
+        currentTheme = 'system';
+    } else {
+        currentTheme = 'light';
+    }
+    
     localStorage.setItem('theme', currentTheme);
     applyTheme(currentTheme);
     
     // Update theme toggle button
     const themeToggle = document.querySelector('.theme-toggle');
     if (themeToggle) {
-        themeToggle.innerHTML = currentTheme === 'dark' ? '☀️' : '🌙';
+        themeToggle.innerHTML = getThemeIcon(currentTheme);
+        themeToggle.title = getThemeTitle(currentTheme);
     }
     
     // Remove transition class after animation completes
@@ -210,12 +360,63 @@ function applyTheme(theme) {
     // Remove existing theme classes
     document.body.classList.remove('light', 'dark', 'light-theme', 'dark-theme');
     
-    // Add new theme class
-    document.body.classList.add(theme);
-    document.documentElement.setAttribute('data-theme', theme);
+    // Handle system preference
+    if (theme === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const effectiveTheme = prefersDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', effectiveTheme);
+        document.body.classList.add(effectiveTheme);
+    } else {
+        // Add new theme class
+        document.body.classList.add(theme);
+        document.documentElement.setAttribute('data-theme', theme);
+    }
     
     // Update currentTheme variable
     currentTheme = theme;
+}
+
+function setupSystemThemeListener() {
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    mediaQuery.addEventListener('change', (e) => {
+        // Only apply system changes if user hasn't manually set a theme
+        const savedTheme = localStorage.getItem('theme');
+        if (!savedTheme || savedTheme === 'system') {
+            const newTheme = e.matches ? 'dark' : 'light';
+            applyTheme('system'); // This will use the new system preference
+        }
+    });
+}
+
+function getThemeIcon(theme) {
+    switch (theme) {
+        case 'light':
+            return '☀️';
+        case 'dark':
+            return '🌙';
+        case 'system':
+            // For system theme, show the effective theme icon
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            return prefersDark ? '🌙' : '☀️';
+        default:
+            return '☀️';
+    }
+}
+
+function getThemeTitle(theme) {
+    switch (theme) {
+        case 'light':
+            return 'Light theme (click for dark)';
+        case 'dark':
+            return 'Dark theme (click for system)';
+        case 'system':
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            return prefersDark ? 'System dark theme (click for light)' : 'System light theme (click for light)';
+        default:
+            return 'Toggle theme';
+    }
 }
 
 function setupOrientationDetection() {
@@ -461,6 +662,24 @@ function updateOrientation(orientation) {
             updateLandscapeIndicator(true);
             break;
     }
+}
+
+// Add the missing updateLandscapeIndicator function
+function updateLandscapeIndicator(isLandscape) {
+    // This function can be used to show/hide landscape-specific UI elements
+    // For now, we'll just log the state for debugging
+    console.log('Landscape mode:', isLandscape);
+    
+    // Update any landscape-specific UI elements here
+    const landscapeElements = document.querySelectorAll('.landscape-only');
+    landscapeElements.forEach(element => {
+        element.style.display = isLandscape ? 'block' : 'none';
+    });
+    
+    const portraitElements = document.querySelectorAll('.portrait-only');
+    portraitElements.forEach(element => {
+        element.style.display = isLandscape ? 'none' : 'block';
+    });
 }
 
 // Alarm Clock functionality (multiple alarms)
@@ -1707,9 +1926,9 @@ document.addEventListener('visibilitychange', function() {
 });
 
 // Service Worker registration
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     window.addEventListener('load', function() {
-        // Use relative path for local development, absolute for production
+        // Only register service worker for HTTP/HTTPS protocols, not file://
         const swPath = window.location.hostname === 'localhost' ? './src/assets/service-worker.js' : '/techgig-hackathon/src/assets/service-worker.js';
         navigator.serviceWorker.register(swPath)
             .then(function(registration) {
@@ -1730,4 +1949,6 @@ if ('serviceWorker' in navigator) {
                 console.log('Service Worker registration failed:', registrationError);
             });
     });
+} else if (window.location.protocol === 'file:') {
+    console.log('Service Worker not registered: Running from file:// protocol');
 }
