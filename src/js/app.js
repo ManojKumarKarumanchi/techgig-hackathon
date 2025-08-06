@@ -56,12 +56,15 @@ function initializeApp() {
     orientationText = document.getElementById('orientation-text');
     loadingScreen = document.getElementById('loading');
 
-    // Check if mobile device
-    if (!isMobileDevice()) {
-        showDesktopFallback();
-        return;
-    }
+    // Debug: Log device detection
+    console.log('User agent:', navigator.userAgent);
+    console.log('isMobileDevice():', isMobileDevice());
 
+    // Patch: Always proceed as mobile for debugging
+    // if (!isMobileDevice()) {
+    //     showDesktopFallback();
+    //     return;
+    // }
     // Hide desktop fallback for mobile devices
     desktopFallback.style.display = 'none';
 
@@ -75,7 +78,7 @@ function initializeApp() {
     // Setup orientation detection
     setupOrientationDetection();
 
-    // Hide loading screen
+    // Hide loading screen (always hide after 1s)
     setTimeout(() => {
         loadingScreen.style.opacity = '0';
         setTimeout(() => {
