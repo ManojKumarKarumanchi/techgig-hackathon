@@ -236,7 +236,12 @@ function setupOrientationDetection() {
 
 function setupOrientationListeners() {
     window.addEventListener('deviceorientation', handleDeviceOrientation);
-    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // Use modern Screen Orientation API if available
+    if (window.screen && window.screen.orientation && window.screen.orientation.addEventListener) {
+        window.screen.orientation.addEventListener('change', handleOrientationChange);
+    }
+    
     detectInitialOrientation();
 }
 
@@ -297,7 +302,12 @@ function showOrientationError() {
 // Device orientation detection - CORE FEATURE
 function setupOrientationDetection() {
     window.addEventListener('deviceorientation', handleDeviceOrientation);
-    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // Use modern Screen Orientation API if available
+    if (window.screen && window.screen.orientation && window.screen.orientation.addEventListener) {
+        window.screen.orientation.addEventListener('change', handleOrientationChange);
+    }
+    
     detectInitialOrientation();
 }
 
@@ -305,13 +315,18 @@ function handleDeviceOrientation(event) {
     const beta = event.beta; // Tilt front-to-back (-180 to 180)
     const gamma = event.gamma; // Tilt left-to-right (-90 to 90)
     
+    // Add debug logging to help understand the values
+    console.log('Device Orientation - Beta:', beta, 'Gamma:', gamma);
+    
     let orientation = '';
-    // Portrait upright: beta ~0, gamma ~0
+    
+    // Portrait upright: beta ~0, gamma ~0 (phone held normally)
     if (Math.abs(beta) < 45 && Math.abs(gamma) < 45) {
         orientation = 'portrait-upright'; // Alarm Clock
     } 
-    // Portrait upside down: beta ~180 or -180, gamma ~0
-    else if ((beta > 135 || beta < -135) && Math.abs(gamma) < 45) {
+    // Portrait upside down: beta significantly tilted (charging port up, camera down)
+    // More flexible range to catch various upside-down positions
+    else if ((beta > 120 || beta < -120) && Math.abs(gamma) < 60) {
         orientation = 'portrait-upside-down'; // Timer
     } 
     // Landscape left (right side up): gamma > 45
@@ -324,38 +339,69 @@ function handleDeviceOrientation(event) {
     } else {
         orientation = 'unknown';
     }
+    
+    console.log('Detected orientation:', orientation);
     updateOrientation(orientation);
 }
 
 function handleOrientationChange() {
     setTimeout(() => {
-        const orientation = window.orientation;
         let orientationType = '';
-        if (orientation === 0) {
-            orientationType = 'portrait-upright';
-        } else if (orientation === 180) {
-            orientationType = 'portrait-upside-down';
-        } else if (orientation === 90) {
-            orientationType = 'landscape-left'; // right side up
-        } else if (orientation === -90) {
-            orientationType = 'landscape-right'; // left side up
+        
+        // Use modern Screen Orientation API if available
+        if (window.screen && window.screen.orientation) {
+            const orientation = window.screen.orientation.type;
+            const angle = window.screen.orientation.angle;
+            
+            console.log('Screen orientation change:', orientation, 'angle:', angle);
+            
+            if (orientation.includes('portrait')) {
+                // Check if it's upside down based on angle
+                if (angle === 180) {
+                    orientationType = 'portrait-upside-down';
+                } else {
+                    orientationType = 'portrait-upright';
+                }
+            } else if (orientation.includes('landscape')) {
+                if (angle === 90) {
+                    orientationType = 'landscape-left';
+                } else if (angle === 270 || angle === -90) {
+                    orientationType = 'landscape-right';
+                } else {
+                    orientationType = 'landscape-left';
+                }
+            }
+        } else {
+            // Fallback for older browsers without Screen Orientation API
+            console.log('Screen Orientation API not available, using device orientation');
+            // Don't set orientationType here, let deviceorientation event handle it
         }
-        updateOrientation(orientationType);
+        
+        console.log('Screen orientation type:', orientationType);
+        if (orientationType) {
+            updateOrientation(orientationType);
+        }
     }, 100);
 }
 
 function detectInitialOrientation() {
-    // Try multiple methods to detect initial orientation
-    if (window.orientation !== undefined) {
-        handleOrientationChange();
-    } else if (window.screen && window.screen.orientation) {
-        // Use Screen Orientation API if available
+    console.log('Detecting initial orientation...');
+    
+    // Use Screen Orientation API if available
+    if (window.screen && window.screen.orientation) {
         const orientation = window.screen.orientation.type;
+        const angle = window.screen.orientation.angle;
+        console.log('Using screen orientation:', orientation, 'angle:', angle);
+        
         if (orientation.includes('portrait')) {
-            updateOrientation('portrait-upright');
+            // Check if it's upside down based on angle
+            if (angle === 180) {
+                updateOrientation('portrait-upside-down');
+            } else {
+                updateOrientation('portrait-upright');
+            }
         } else if (orientation.includes('landscape')) {
             // Try to guess left/right from angle if available
-            const angle = window.screen.orientation.angle;
             if (angle === 90) {
                 updateOrientation('landscape-left');
             } else if (angle === 270 || angle === -90) {
@@ -367,7 +413,8 @@ function detectInitialOrientation() {
             updateOrientation('portrait-upright');
         }
     } else {
-        // Fallback to portrait-upright
+        // Fallback to portrait-upright for older browsers
+        console.log('Screen Orientation API not available, using fallback: portrait-upright');
         updateOrientation('portrait-upright');
     }
 }
