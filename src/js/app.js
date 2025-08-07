@@ -1,9 +1,12 @@
 // Smart Orientation App - Core Implementation
-// Focused on the hackathon problem statement
+// Orientation mapping:
+// Portrait Upright: Alarm Clock
+// Portrait Upside Down: Timer
+// Landscape-Left (right side up): Stopwatch
+// Landscape-Right (left side up): Weather
 
 // Global variables
 let currentOrientation = 'unknown';
-let landscapeFeatureToggle = 'stopwatch';
 let currentTheme = 'light';
 let timeFormat = '24'; // 24 or 12 hour format
 let isFullscreen = false;
@@ -39,46 +42,111 @@ let loadingScreen;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
     initializeApp();
 });
 
-function initializeApp() {
-    // Get DOM elements
-    alarmContainer = document.getElementById('alarm');
-    stopwatchContainer = document.getElementById('stopwatch');
-    timerContainer = document.getElementById('timer');
-    weatherContainer = document.getElementById('weather');
-    desktopFallback = document.getElementById('desktop-fallback');
-    orientationIndicator = document.getElementById('orientation-indicator');
-    orientationText = document.getElementById('orientation-text');
-    loadingScreen = document.getElementById('loading');
+// Fallback initialization in case DOMContentLoaded doesn't fire
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already loaded
+    console.log('DOM already loaded, initializing immediately');
+    initializeApp();
+}
 
-    // Check if mobile device
-    if (!isMobileDevice()) {
-        showDesktopFallback();
-        return;
-    }
-
-    // Hide desktop fallback for mobile devices
-    desktopFallback.style.display = 'none';
-
-    // Initialize all features
-    initializeAlarmClock();
-    initializeStopwatch();
-    initializeTimer();
-    initializeWeather();
-    initializeTheme();
-
-    // Setup orientation detection
-    setupOrientationDetection();
-
-    // Hide loading screen
-    setTimeout(() => {
+// Emergency fallback: Hide loading screen after 3 seconds regardless
+setTimeout(() => {
+    const loadingScreen = document.getElementById('loading');
+    if (loadingScreen && loadingScreen.style.display !== 'none') {
+        console.log('Emergency fallback: Hiding loading screen');
         loadingScreen.style.opacity = '0';
         setTimeout(() => {
             loadingScreen.style.display = 'none';
+        }, 300);
+    }
+}, 3000);
+
+function initializeApp() {
+    try {
+        console.log('Initializing app...');
+        
+        // Get DOM elements
+        alarmContainer = document.getElementById('alarm');
+        stopwatchContainer = document.getElementById('stopwatch');
+        timerContainer = document.getElementById('timer');
+        weatherContainer = document.getElementById('weather');
+        desktopFallback = document.getElementById('desktop-fallback');
+        orientationIndicator = document.getElementById('orientation-indicator');
+        orientationText = document.getElementById('orientation-text');
+        loadingScreen = document.getElementById('loading');
+
+        // Debug: Log device detection
+        console.log('User agent:', navigator.userAgent);
+        console.log('isMobileDevice():', isMobileDevice());
+
+        // Hide loading screen immediately for debugging
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 300);
+        }
+
+        // Show desktop fallback only for non-mobile devices
+        if (desktopFallback) {
+            if (!isMobileDevice()) {
+                desktopFallback.style.display = 'flex';
+                loadingScreen.style.display = 'none';
+                console.log('Showing desktop fallback for non-mobile device');
+                return; // Exit initialization for desktop
+            } else {
+                desktopFallback.style.display = 'none';
+                console.log('Hiding desktop fallback for mobile device');
+            }
+        }
+
+        // Initialize all features
+        console.log('Initializing features...');
+        initializeAlarmClock();
+        initializeStopwatch();
+        initializeTimer();
+        initializeWeather();
+        initializeTheme();
+
+        // Setup orientation detection
+        setupOrientationDetection();
+        
+        // Show alarm container by default immediately
+        if (alarmContainer) {
+            alarmContainer.classList.add('active');
+            console.log('Showing alarm container by default');
+        }
+        
+        // Ensure at least one feature is shown by default
+        setTimeout(() => {
+            const activeContainer = document.querySelector('.feature-container.active');
+            if (!activeContainer) {
+                console.log('No active feature container found, showing alarm by default');
+                if (alarmContainer) {
+                    alarmContainer.classList.add('active');
+                    updateOrientation('portrait-upright');
+                }
+            }
         }, 500);
-    }, 1000);
+        
+        console.log('App initialization complete');
+        
+    } catch (error) {
+        console.error('Error during app initialization:', error);
+        // Hide loading screen even if there's an error
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 300);
+        }
+    }
 }
 
 // Theme functionality
@@ -90,9 +158,8 @@ function initializeTheme() {
     if (savedTheme) {
         currentTheme = savedTheme;
     } else {
-        // Check system preference
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        currentTheme = prefersDark ? 'dark' : 'light';
+        // Default to system preference
+        currentTheme = 'system';
     }
     
     // Set time format - default to '24' if not saved
@@ -104,9 +171,30 @@ function initializeTheme() {
     }
     
     applyTheme(currentTheme);
+    addHeaderToggle();
     addThemeToggle();
     addTimeFormatToggle();
     addFullscreenToggle();
+    
+    // Set up popup close button
+    const closePopupBtn = document.getElementById('close-popup');
+    if (closePopupBtn) {
+        closePopupBtn.onclick = closeHeaderPopup;
+    }
+    
+    // Close popup when clicking outside
+    document.addEventListener('click', function(event) {
+        const popup = document.getElementById('header-popup');
+        const headerToggle = document.getElementById('header-toggle');
+        if (popup && popup.classList.contains('show') && 
+            !popup.contains(event.target) && 
+            !headerToggle.contains(event.target)) {
+            closeHeaderPopup();
+        }
+    });
+    
+    // Listen for system theme changes
+    setupSystemThemeListener();
     
     // Update current time immediately
     updateCurrentTime();
@@ -115,45 +203,113 @@ function initializeTheme() {
     setInterval(updateCurrentTime, 1000);
 }
 
+function addHeaderToggle() {
+    // Check if header toggle already exists
+    if (document.querySelector('.header-toggle-btn')) {
+        return;
+    }
+    
+    const headerToggle = document.getElementById('header-toggle');
+    if (headerToggle) {
+        headerToggle.onclick = toggleHeaderPopup;
+    }
+}
+
 function addThemeToggle() {
+    // Check if theme toggle already exists
+    if (document.querySelector('.theme-toggle')) {
+        return;
+    }
+    
+    const popupControls = document.querySelector('.popup-controls');
+    if (!popupControls) {
+        console.error('Popup controls container not found');
+        return;
+    }
+    
     const themeToggle = document.createElement('button');
-    themeToggle.className = 'theme-toggle';
-    themeToggle.innerHTML = currentTheme === 'dark' ? '☀️' : '🌙';
-    themeToggle.title = 'Toggle theme';
+    themeToggle.className = 'theme-toggle popup-control-btn';
+    themeToggle.innerHTML = getThemeIcon(currentTheme);
+    themeToggle.title = getThemeTitle(currentTheme);
     themeToggle.onclick = toggleTheme;
-    orientationIndicator.appendChild(themeToggle);
+    popupControls.appendChild(themeToggle);
 }
 
 function addTimeFormatToggle() {
+    // Check if time format toggle already exists
+    if (document.querySelector('.time-format-toggle')) {
+        return;
+    }
+    
+    const popupControls = document.querySelector('.popup-controls');
+    if (!popupControls) {
+        console.error('Popup controls container not found');
+        return;
+    }
+    
     const timeFormatToggle = document.createElement('button');
-    timeFormatToggle.className = 'time-format-toggle';
+    timeFormatToggle.className = 'time-format-toggle popup-control-btn';
     timeFormatToggle.textContent = timeFormat === '24' ? '24H' : '12H';
     timeFormatToggle.title = 'Toggle time format';
     timeFormatToggle.onclick = toggleTimeFormat;
-    orientationIndicator.appendChild(timeFormatToggle);
+    popupControls.appendChild(timeFormatToggle);
 }
 
 function addFullscreenToggle() {
+    // Check if fullscreen toggle already exists
+    if (document.querySelector('.fullscreen-toggle')) {
+        return;
+    }
+    
+    const popupControls = document.querySelector('.popup-controls');
+    if (!popupControls) {
+        console.error('Popup controls container not found');
+        return;
+    }
+    
     const fullscreenToggle = document.createElement('button');
-    fullscreenToggle.className = 'fullscreen-toggle';
+    fullscreenToggle.className = 'fullscreen-toggle popup-control-btn';
     fullscreenToggle.innerHTML = '⛶';
     fullscreenToggle.title = 'Toggle fullscreen';
     fullscreenToggle.onclick = toggleFullscreen;
-    orientationIndicator.appendChild(fullscreenToggle);
+    popupControls.appendChild(fullscreenToggle);
+}
+
+function toggleHeaderPopup() {
+    const popup = document.getElementById('header-popup');
+    if (popup) {
+        popup.classList.toggle('show');
+    }
+}
+
+function closeHeaderPopup() {
+    const popup = document.getElementById('header-popup');
+    if (popup) {
+        popup.classList.remove('show');
+    }
 }
 
 function toggleTheme() {
     // Add transition class for smooth theme switching
     document.body.classList.add('theme-transitioning');
     
-    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    // Toggle between light, dark, and system preference
+    if (currentTheme === 'light') {
+        currentTheme = 'dark';
+    } else if (currentTheme === 'dark') {
+        currentTheme = 'system';
+    } else {
+        currentTheme = 'light';
+    }
+    
     localStorage.setItem('theme', currentTheme);
     applyTheme(currentTheme);
     
     // Update theme toggle button
     const themeToggle = document.querySelector('.theme-toggle');
     if (themeToggle) {
-        themeToggle.innerHTML = currentTheme === 'dark' ? '☀️' : '🌙';
+        themeToggle.innerHTML = getThemeIcon(currentTheme);
+        themeToggle.title = getThemeTitle(currentTheme);
     }
     
     // Remove transition class after animation completes
@@ -204,12 +360,63 @@ function applyTheme(theme) {
     // Remove existing theme classes
     document.body.classList.remove('light', 'dark', 'light-theme', 'dark-theme');
     
-    // Add new theme class
-    document.body.classList.add(theme);
-    document.documentElement.setAttribute('data-theme', theme);
+    // Handle system preference
+    if (theme === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const effectiveTheme = prefersDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', effectiveTheme);
+        document.body.classList.add(effectiveTheme);
+    } else {
+        // Add new theme class
+        document.body.classList.add(theme);
+        document.documentElement.setAttribute('data-theme', theme);
+    }
     
     // Update currentTheme variable
     currentTheme = theme;
+}
+
+function setupSystemThemeListener() {
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    mediaQuery.addEventListener('change', (e) => {
+        // Only apply system changes if user hasn't manually set a theme
+        const savedTheme = localStorage.getItem('theme');
+        if (!savedTheme || savedTheme === 'system') {
+            const newTheme = e.matches ? 'dark' : 'light';
+            applyTheme('system'); // This will use the new system preference
+        }
+    });
+}
+
+function getThemeIcon(theme) {
+    switch (theme) {
+        case 'light':
+            return '☀️';
+        case 'dark':
+            return '🌙';
+        case 'system':
+            // For system theme, show the effective theme icon
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            return prefersDark ? '🌙' : '☀️';
+        default:
+            return '☀️';
+    }
+}
+
+function getThemeTitle(theme) {
+    switch (theme) {
+        case 'light':
+            return 'Light theme (click for dark)';
+        case 'dark':
+            return 'Dark theme (click for system)';
+        case 'system':
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            return prefersDark ? 'System dark theme (click for light)' : 'System light theme (click for light)';
+        default:
+            return 'Toggle theme';
+    }
 }
 
 function setupOrientationDetection() {
@@ -233,7 +440,12 @@ function setupOrientationDetection() {
 
 function setupOrientationListeners() {
     window.addEventListener('deviceorientation', handleDeviceOrientation);
-    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // Use modern Screen Orientation API if available
+    if (window.screen && window.screen.orientation && window.screen.orientation.addEventListener) {
+        window.screen.orientation.addEventListener('change', handleOrientationChange);
+    }
+    
     detectInitialOrientation();
 }
 
@@ -294,7 +506,12 @@ function showOrientationError() {
 // Device orientation detection - CORE FEATURE
 function setupOrientationDetection() {
     window.addEventListener('deviceorientation', handleDeviceOrientation);
-    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // Use modern Screen Orientation API if available
+    if (window.screen && window.screen.orientation && window.screen.orientation.addEventListener) {
+        window.screen.orientation.addEventListener('change', handleOrientationChange);
+    }
+    
     detectInitialOrientation();
 }
 
@@ -302,53 +519,106 @@ function handleDeviceOrientation(event) {
     const beta = event.beta; // Tilt front-to-back (-180 to 180)
     const gamma = event.gamma; // Tilt left-to-right (-90 to 90)
     
+    // Add debug logging to help understand the values
+    console.log('Device Orientation - Beta:', beta, 'Gamma:', gamma);
+    
     let orientation = '';
     
-    // Core orientation detection logic
+    // Portrait upright: beta ~0, gamma ~0 (phone held normally)
     if (Math.abs(beta) < 45 && Math.abs(gamma) < 45) {
         orientation = 'portrait-upright'; // Alarm Clock
-    } else if (Math.abs(beta) > 135 && Math.abs(gamma) < 45) {
+    } 
+    // Portrait upside down: beta significantly tilted (charging port up, camera down)
+    // More flexible range to catch various upside-down positions
+    else if ((beta > 120 || beta < -120) && Math.abs(gamma) < 60) {
         orientation = 'portrait-upside-down'; // Timer
-    } else if (Math.abs(gamma) > 45) {
-        orientation = 'landscape'; // Stopwatch or Weather
+    } 
+    // Landscape left (right side up): gamma > 45
+    else if (gamma > 45) {
+        orientation = 'landscape-left'; // Stopwatch
+    } 
+    // Landscape right (left side up): gamma < -45
+    else if (gamma < -45) {
+        orientation = 'landscape-right'; // Weather
     } else {
         orientation = 'unknown';
     }
     
+    console.log('Detected orientation:', orientation);
     updateOrientation(orientation);
 }
 
 function handleOrientationChange() {
     setTimeout(() => {
-        const orientation = window.orientation;
         let orientationType = '';
         
-        if (orientation === 0 || orientation === 180) {
-            orientationType = orientation === 0 ? 'portrait-upright' : 'portrait-upside-down';
-        } else if (orientation === 90 || orientation === -90) {
-            orientationType = 'landscape';
+        // Use modern Screen Orientation API if available
+        if (window.screen && window.screen.orientation) {
+            const orientation = window.screen.orientation.type;
+            const angle = window.screen.orientation.angle;
+            
+            console.log('Screen orientation change:', orientation, 'angle:', angle);
+            
+            if (orientation.includes('portrait')) {
+                // Check if it's upside down based on angle
+                if (angle === 180) {
+                    orientationType = 'portrait-upside-down';
+                } else {
+                    orientationType = 'portrait-upright';
+                }
+            } else if (orientation.includes('landscape')) {
+                if (angle === 90) {
+                    orientationType = 'landscape-left';
+                } else if (angle === 270 || angle === -90) {
+                    orientationType = 'landscape-right';
+                } else {
+                    orientationType = 'landscape-left';
+                }
+            }
+        } else {
+            // Fallback for older browsers without Screen Orientation API
+            console.log('Screen Orientation API not available, using device orientation');
+            // Don't set orientationType here, let deviceorientation event handle it
         }
         
-        updateOrientation(orientationType);
+        console.log('Screen orientation type:', orientationType);
+        if (orientationType) {
+            updateOrientation(orientationType);
+        }
     }, 100);
 }
 
 function detectInitialOrientation() {
-    // Try multiple methods to detect initial orientation
-    if (window.orientation !== undefined) {
-        handleOrientationChange();
-    } else if (window.screen && window.screen.orientation) {
-        // Use Screen Orientation API if available
+    console.log('Detecting initial orientation...');
+    
+    // Use Screen Orientation API if available
+    if (window.screen && window.screen.orientation) {
         const orientation = window.screen.orientation.type;
+        const angle = window.screen.orientation.angle;
+        console.log('Using screen orientation:', orientation, 'angle:', angle);
+        
         if (orientation.includes('portrait')) {
-            updateOrientation('portrait-upright');
+            // Check if it's upside down based on angle
+            if (angle === 180) {
+                updateOrientation('portrait-upside-down');
+            } else {
+                updateOrientation('portrait-upright');
+            }
         } else if (orientation.includes('landscape')) {
-            updateOrientation('landscape');
+            // Try to guess left/right from angle if available
+            if (angle === 90) {
+                updateOrientation('landscape-left');
+            } else if (angle === 270 || angle === -90) {
+                updateOrientation('landscape-right');
+            } else {
+                updateOrientation('landscape-left');
+            }
         } else {
             updateOrientation('portrait-upright');
         }
     } else {
-        // Fallback to portrait-upright
+        // Fallback to portrait-upright for older browsers
+        console.log('Screen Orientation API not available, using fallback: portrait-upright');
         updateOrientation('portrait-upright');
     }
 }
@@ -357,23 +627,19 @@ function updateOrientation(orientation) {
     if (orientation === currentOrientation || orientation === 'unknown') {
         return;
     }
-    
     currentOrientation = orientation;
-    
     // Update orientation indicator
     const orientationLabels = {
         'portrait-upright': 'Portrait (Alarm)',
         'portrait-upside-down': 'Upside Down (Timer)',
-        'landscape': `Landscape (${landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather'})`
+        'landscape-left': 'Landscape Left (Stopwatch)',
+        'landscape-right': 'Landscape Right (Weather)'
     };
-    
     orientationText.textContent = orientationLabels[orientation] || 'Detecting...';
-    
     // Hide all feature containers
     document.querySelectorAll('.feature-container').forEach(container => {
         container.classList.remove('active');
     });
-    
     // Show appropriate feature based on orientation - CORE LOGIC
     switch (orientation) {
         case 'portrait-upright':
@@ -384,19 +650,36 @@ function updateOrientation(orientation) {
             timerContainer.classList.add('active');
             updateLandscapeIndicator(false);
             break;
-        case 'landscape':
-            // Toggle between Stopwatch and Weather in landscape mode
-            if (landscapeFeatureToggle === 'stopwatch') {
-                stopwatchContainer.classList.add('active');
-                weatherContainer.classList.remove('active');
-            } else {
-                weatherContainer.classList.add('active');
-                stopwatchContainer.classList.remove('active');
-                loadWeatherData();
-            }
+        case 'landscape-left':
+            stopwatchContainer.classList.add('active');
+            weatherContainer.classList.remove('active');
+            updateLandscapeIndicator(true);
+            break;
+        case 'landscape-right':
+            weatherContainer.classList.add('active');
+            stopwatchContainer.classList.remove('active');
+            loadWeatherData();
             updateLandscapeIndicator(true);
             break;
     }
+}
+
+// Add the missing updateLandscapeIndicator function
+function updateLandscapeIndicator(isLandscape) {
+    // This function can be used to show/hide landscape-specific UI elements
+    // For now, we'll just log the state for debugging
+    console.log('Landscape mode:', isLandscape);
+    
+    // Update any landscape-specific UI elements here
+    const landscapeElements = document.querySelectorAll('.landscape-only');
+    landscapeElements.forEach(element => {
+        element.style.display = isLandscape ? 'block' : 'none';
+    });
+    
+    const portraitElements = document.querySelectorAll('.portrait-only');
+    portraitElements.forEach(element => {
+        element.style.display = isLandscape ? 'none' : 'block';
+    });
 }
 
 // Alarm Clock functionality (multiple alarms)
@@ -1620,150 +1903,6 @@ document.addEventListener('touchend', function(e) {
     }
 });
 
-// Landscape feature toggle - multiple methods to switch between Stopwatch and Weather
-let lastTapTime = 0;
-let startX = 0;
-let startY = 0;
-let isSwiping = false;
-
-// Touch start for swipe detection
-document.addEventListener('touchstart', function(e) {
-    if (currentOrientation === 'landscape' && 
-        !e.target.classList.contains('btn') && 
-        !e.target.classList.contains('preset-btn') &&
-        !e.target.closest('.btn') &&
-        !e.target.closest('.preset-btn')) {
-        
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isSwiping = false;
-    }
-});
-
-// Touch move for swipe detection
-document.addEventListener('touchmove', function(e) {
-    if (currentOrientation === 'landscape' && startX !== 0) {
-        const currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
-        const deltaX = Math.abs(currentX - startX);
-        const deltaY = Math.abs(currentY - startY);
-        
-        // If horizontal movement is greater than vertical, it's a swipe
-        if (deltaX > deltaY && deltaX > 10) {
-            isSwiping = true;
-        }
-    }
-});
-
-// Touch end for both tap and swipe detection
-document.addEventListener('touchend', function(e) {
-    // Only trigger if we're in landscape mode and not clicking on buttons
-    if (currentOrientation === 'landscape' && 
-        !e.target.classList.contains('btn') && 
-        !e.target.classList.contains('preset-btn') &&
-        !e.target.closest('.btn') &&
-        !e.target.closest('.preset-btn')) {
-        
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTapTime;
-        
-        // Method 1: Double tap to toggle landscape features
-        if (tapLength < 500 && tapLength > 0 && !isSwiping) {
-            toggleLandscapeFeature();
-            e.preventDefault();
-        }
-        
-        // Method 2: Swipe to toggle landscape features
-        if (isSwiping && startX !== 0) {
-            const endX = e.changedTouches[0].clientX;
-            const swipeDistance = endX - startX;
-            
-            if (Math.abs(swipeDistance) > 50) { // Minimum swipe distance
-                toggleLandscapeFeature();
-                e.preventDefault();
-            }
-        }
-        
-        lastTapTime = currentTime;
-        startX = 0;
-        startY = 0;
-        isSwiping = false;
-    }
-});
-
-// Function to toggle landscape feature
-function toggleLandscapeFeature() {
-    landscapeFeatureToggle = landscapeFeatureToggle === 'stopwatch' ? 'weather' : 'stopwatch';
-    updateOrientation('landscape'); // Refresh the display
-    
-    // Show visual feedback
-    showLandscapeToggleFeedback();
-    
-    // Haptic feedback if available
-    if (navigator.vibrate) {
-        navigator.vibrate(100);
-    }
-}
-
-// Visual feedback for landscape toggle
-function showLandscapeToggleFeedback() {
-    // Create or update toggle indicator
-    let toggleIndicator = document.getElementById('landscape-toggle-indicator');
-    if (!toggleIndicator) {
-        toggleIndicator = document.createElement('div');
-        toggleIndicator.id = 'landscape-toggle-indicator';
-        toggleIndicator.className = 'landscape-toggle-indicator';
-        document.body.appendChild(toggleIndicator);
-    }
-    
-    const featureName = landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather';
-    const icon = landscapeFeatureToggle === 'stopwatch' ? '⏱️' : '🌤️';
-    
-    toggleIndicator.innerHTML = `
-        <div class="toggle-feedback">
-            <span class="toggle-icon">${icon}</span>
-            <span class="toggle-text">${featureName}</span>
-        </div>
-    `;
-    
-    toggleIndicator.classList.add('show');
-    
-    // Hide after 2 seconds
-    setTimeout(() => {
-        toggleIndicator.classList.remove('show');
-    }, 2000);
-}
-
-// Update persistent landscape indicator
-function updateLandscapeIndicator(show) {
-    let persistentIndicator = document.getElementById('landscape-persistent-indicator');
-    
-    if (show) {
-        if (!persistentIndicator) {
-            persistentIndicator = document.createElement('div');
-            persistentIndicator.id = 'landscape-persistent-indicator';
-            persistentIndicator.className = 'landscape-persistent-indicator';
-            document.body.appendChild(persistentIndicator);
-        }
-        
-        const featureName = landscapeFeatureToggle === 'stopwatch' ? 'Stopwatch' : 'Weather';
-        const icon = landscapeFeatureToggle === 'stopwatch' ? '⏱️' : '🌤️';
-        
-        persistentIndicator.innerHTML = `
-            <div class="persistent-indicator">
-                <span class="persistent-icon">${icon}</span>
-                <span class="persistent-text">${featureName}</span>
-            </div>
-        `;
-        
-        persistentIndicator.classList.add('visible');
-    } else {
-        if (persistentIndicator) {
-            persistentIndicator.classList.remove('visible');
-        }
-    }
-}
-
 // Prevent zoom on double tap
 let lastTouchEnd = 0;
 document.addEventListener('touchend', function(event) {
@@ -1787,9 +1926,9 @@ document.addEventListener('visibilitychange', function() {
 });
 
 // Service Worker registration
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     window.addEventListener('load', function() {
-        // Use relative path for local development, absolute for production
+        // Only register service worker for HTTP/HTTPS protocols, not file://
         const swPath = window.location.hostname === 'localhost' ? './src/assets/service-worker.js' : '/techgig-hackathon/src/assets/service-worker.js';
         navigator.serviceWorker.register(swPath)
             .then(function(registration) {
@@ -1810,4 +1949,6 @@ if ('serviceWorker' in navigator) {
                 console.log('Service Worker registration failed:', registrationError);
             });
     });
+} else if (window.location.protocol === 'file:') {
+    console.log('Service Worker not registered: Running from file:// protocol');
 }

@@ -49,6 +49,28 @@
     <div id="orientation-indicator" class="orientation-indicator">
         <i class="fas fa-mobile-alt"></i>
         <span id="orientation-text">Detecting orientation...</span>
+        <button id="header-toggle" class="header-toggle-btn" title="Open settings">
+            <i class="fas fa-cog"></i>
+        </button>
+    </div>
+
+    <!-- Header Controls Pop-up -->
+    <div id="header-popup" class="header-popup">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3>Settings</h3>
+                <button id="close-popup" class="close-btn" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="popup-body">
+                <div class="popup-controls">
+                    <!-- Theme toggle will be added here -->
+                    <!-- Time format toggle will be added here -->
+                    <!-- Fullscreen toggle will be added here -->
+                </div>
+            </div>
+        </div>
     </div>
 
 
@@ -293,7 +315,6 @@
             </div>
         </div>
     </div>
-
             <script src="src/js/app.js"></script>
 </body>
 </html> 
